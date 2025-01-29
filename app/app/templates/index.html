@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+</head>
+<body>
+    <h1>Main Page</h1>
+    <div id="welcomeMessage"></div>
+    <button id="loginButton" onclick="window.location.href='/login'">Log in</button>
+    <button id="signinButton" onclick="window.location.href='/signin'">Sign in</button>
+    <button id="logoutButton" onclick="logout()" style="display: none;">Log out</button>
+    <button id="accountButton" onclick="window.location.href='/account'" style="display:none;">Your account</button>
+    <input id="searchInput" placeholder="Browse articles"/>
+    <button onclick="searchArticles()">Search</button>
+    <div id="articles"></div>
+
+    <script>
+        function logout() {
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message); 
+            })
+            .catch(error => {
+                console.error('Error while logging out:', error);
+            });
+
+            localStorage.removeItem('token');
+            window.location.href = '/'; 
+        }
+
+        const token = localStorage.getItem('token');
+        fetch('/api/user', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        document.getElementById('welcomeMessage').innerText = `Welcome ${data.username}!`;
+                        document.getElementById('loginButton').style.display = 'none';
+                        document.getElementById('signinButton').style.display = 'none';
+                        document.getElementById('logoutButton').style.display = 'block';
+                        document.getElementById('accountButton').style.display = 'block';    
+                    }
+                })
+    </script>
+</body>
+</html>
