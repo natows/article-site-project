@@ -15,3 +15,13 @@ def signin_page():
 @app.route('/account')
 def account_page():
     return render_template('account.html')
+
+@app.route('/create_article')
+def create_article_page():
+    return render_template('create.html')
+
+@app.route('/sport')
+def sport_page():
+    return render_template('sport.html')
+
+

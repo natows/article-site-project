@@ -8,4 +8,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-from . import userHandling, routes
+from . import userHandling, routes, articleHandling
+
+
