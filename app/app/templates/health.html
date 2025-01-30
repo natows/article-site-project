@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Section</title>
+</head>
+<body>
+    <header>
+        <h1>Health Section</h1>
+    </header>
+    <main>
+        <div>
+            <input id="searchInput" placeholder="Search articles"/>
+            <button onclick="searchArticles()">Search</button>
+        </div>
+        <div id="articles"></div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchArticles();
+        });
+
+        function fetchArticles(query = '') {
+            fetch(`/api/articles/health?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    const articlesDiv = document.getElementById('articles');
+                    articlesDiv.innerHTML = '';
+                    data.forEach(article => {
+                        const articleElement = document.createElement('article');
+                        articleElement.innerHTML = `<h2>${article.title}</h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p>`;
+                        articlesDiv.appendChild(articleElement);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function searchArticles() {
+            const query = document.getElementById('searchInput').value;
+            fetchArticles(query);
+        }
+    </script>
+</body>
+</html>

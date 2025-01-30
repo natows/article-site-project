@@ -24,4 +24,14 @@ def create_article_page():
 def sport_page():
     return render_template('sport.html')
 
+@app.route('/technology')
+def technology_page():
+    return render_template('technology.html')
 
+@app.route('/health')
+def health_page():
+    return render_template('health.html')
+
+@app.route('/entertainment')
+def entertainment_page():
+    return render_template('entertainment.html')
