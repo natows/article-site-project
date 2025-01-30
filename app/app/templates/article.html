@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>{{ article.title }}</h1>
+    </header>
+    <main>
+        <div>
+            <p>{{ article.content }}</p>
+            <p class="date">Published on: {{ article.date_created.strftime('%Y-%m-%d') }}</p>
+        </div>
+        <div id="commentSection">
+            <h2>Comments</h2>
+            <div id="comments">
+                {% for comment in comments %}
+                <div class="message" id="comment-{{ comment.id }}">
+                    <span class="username">{{ comment.username }}:</span>
+                    <span class="text">{{ comment.text }}</span>
+                    <div class="actions">
+                        <button class="like-button" onclick="likeComment(Number('{{ comment.id }}'))">Like ({{ comment.likes }})</button>
+                        <button class="dislike-button" onclick="dislikeComment(Number('{{ comment.id }}'))">Dislike ({{ comment.dislikes }})</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="commentInputSection">
+                <input id="commentInput" placeholder="Type a comment"/>
+                <button onclick="sendComment()">Send</button>
+            </div>
+            <p id="loginPrompt" class="hidden"><a href="/login">Log in to write comments</a></p>
+        </div>
+    </main>
+
+    <script>
+        const socket = io();
+        let username = '';
+        const room = 'article_{{ article.id }}';
+        const articleId = Number('{{ article.id }}');
+        const token = localStorage.getItem('token');
+
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket');
+            socket.emit('join', { username, room });
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from WebSocket');
+        });
+
+        socket.on('comment', function(data) {
+            const commentsDiv = document.getElementById('comments');
+            const commentElement = document.createElement('div');
+            commentElement.classList.add('message');
+            commentElement.id = `comment-${data.id}`;
+            if (data.username === username) {
+                commentElement.classList.add('self');
+            }
+            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="likeComment(${data.id})">Like (${data.likes})</button><button class="dislike-button" onclick="dislikeComment(${data.id})">Dislike (${data.dislikes})</button></div>`;
+            commentsDiv.appendChild(commentElement);
+        });
+
+        function sendComment() {
+            const text = document.getElementById('commentInput').value;
+            if (!username) {
+                console.error('Username is not set');
+                return;
+            }
+            console.log('Sending comment:', { article_id: articleId, username, text });
+            fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ article_id: articleId, username, text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    socket.emit('comment', { id: data.id, username, text, room, likes: 0, dislikes: 0 });
+                    document.getElementById('commentInput').value = '';
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function likeComment(commentId) {
+            fetch(`/api/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const commentElement = document.getElementById(`comment-${commentId}`);
+                    const likeButton = commentElement.querySelector('.like-button');
+                    const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]) + 1;
+                    likeButton.textContent = `Like (${likeCount})`;
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function dislikeComment(commentId) {
+            fetch(`/api/comments/${commentId}/dislike`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const commentElement = document.getElementById(`comment-${commentId}`);
+                    const dislikeButton = commentElement.querySelector('.dislike-button');
+                    const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]) + 1;
+                    dislikeButton.textContent = `Dislike (${dislikeCount})`;
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (token) {
+                fetch('/api/user', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        username = data.username;
+                        console.log('Username set to:', username);
+                        socket.emit('join', { username, room });
+                        document.getElementById('commentInputSection').classList.remove('hidden');
+                        document.getElementById('loginPrompt').classList.add('hidden');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                document.getElementById('commentInputSection').classList.add('hidden');
+                document.getElementById('loginPrompt').classList.remove('hidden');
+                document.querySelectorAll('.like-button, .dislike-button').forEach(button => {
+                    button.classList.add('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

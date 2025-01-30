@@ -17,7 +17,7 @@ def search_articles():
     query = request.args.get('query', '')
     category = request.args.get('category', '')
     articles = Article.query.filter(Article.title.contains(query), Article.category.contains(category)).all()
-    results = [{'title': article.title, 'content': article.content, 'category': article.category, 'date_created': article.date_created} for article in articles]
+    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'date_created': article.date_created} for article in articles]
     return jsonify(results)
 
 @app.route('/api/create', methods=['POST'])
@@ -40,5 +40,5 @@ def create_article():
 def get_articles_by_category(category):
     query = request.args.get('query', '')
     articles = Article.query.filter(Article.category == category, Article.title.contains(query)).all()
-    results = [{'title': article.title, 'content': article.content, 'date_created': article.date_created} for article in articles]
+    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'date_created': article.date_created} for article in articles]
     return jsonify(results)

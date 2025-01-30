@@ -1,5 +1,7 @@
 from app import app
 from flask import render_template
+from app.articleHandling import Article
+from app.commentHandling import Comment
 
 @app.route('/')
 def home():
@@ -35,3 +37,10 @@ def health_page():
 @app.route('/entertainment')
 def entertainment_page():
     return render_template('entertainment.html')
+
+
+@app.route('/article/<int:article_id>')
+def article_page(article_id):
+    article = Article.query.get_or_404(article_id)
+    comments = Comment.query.filter_by(article_id=article_id).order_by(Comment.date_created.asc()).all()
+    return render_template('article.html', article=article, comments=comments)

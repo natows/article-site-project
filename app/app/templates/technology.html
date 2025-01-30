@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Technology Section</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
 </head>
 <body>
     <header>
@@ -15,13 +16,65 @@
             <button onclick="searchArticles()">Search</button>
         </div>
         <div id="articles"></div>
+        <div id="chatSection" class="hidden">
+            <h2>Live Chat</h2>
+            <div id="chat"></div>
+            <input id="chatInput" placeholder="Type a message"/>
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </main>
 
     <script>
+        const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
+        const topic = 'projektProtokoly/chat/technology';
+        let username = '';
+
+        client.onMessageArrived = function(message) {
+            const chatDiv = document.getElementById('chat');
+            const msg = JSON.parse(message.payloadString);
+            const msgElement = document.createElement('div');
+            msgElement.classList.add('message');
+            if (msg.username === username) {
+                msgElement.classList.add('self');
+            }
+            msgElement.innerHTML = `<span class="username">${msg.username}:</span><span class="text">${msg.text}</span>`;
+            chatDiv.appendChild(msgElement);
+        };
+
+        client.connect({ onSuccess: function() {
+            console.log('Connected to MQTT broker');
+            client.subscribe(topic);
+        }});
+
+        function sendMessage() {
+            const text = document.getElementById('chatInput').value;
+            const message = JSON.stringify({ username, text });
+            const mqttMessage = new Paho.MQTT.Message(message);
+            mqttMessage.destinationName = topic;
+            client.send(mqttMessage);
+            document.getElementById('chatInput').value = '';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('/api/user', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        username = data.username;
+                        document.getElementById('chatSection').classList.remove('hidden');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
             fetchArticles();
         });
-
         function fetchArticles(query = '') {
             fetch(`/api/articles/technology?query=${query}`)
                 .then(response => response.json())
@@ -30,7 +83,7 @@
                     articlesDiv.innerHTML = '';
                     data.forEach(article => {
                         const articleElement = document.createElement('article');
-                        articleElement.innerHTML = `<h2>${article.title}</h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p>`;
+                        articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p>`;
                         articlesDiv.appendChild(articleElement);
                     });
                 })
