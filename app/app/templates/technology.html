@@ -27,7 +27,7 @@
     <script>
         const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
         const topic = 'projektProtokoly/chat/technology';
-        let username = '';
+        let username = 'Anonymous User';
 
         client.onMessageArrived = function(message) {
             const chatDiv = document.getElementById('chat');
@@ -72,9 +72,12 @@
                     }
                 })
                 .catch(error => console.error('Error:', error));
+            } else {
+                document.getElementById('chatSection').classList.remove('hidden');
             }
             fetchArticles();
         });
+
         function fetchArticles(query = '') {
             fetch(`/api/articles/technology?query=${query}`)
                 .then(response => response.json())

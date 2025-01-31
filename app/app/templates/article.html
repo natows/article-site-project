@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ article.title }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         .hidden {
             display: none;
@@ -29,7 +30,7 @@
                     <span class="username">{{ comment.username }}:</span>
                     <span class="text">{{ comment.text }}</span>
                     <div class="actions">
-                        <button class="like-button" onclick="likeComment(Number('{{ comment.id }}'))">Like ({{ comment.likes }})</button>
+                        <button class="like-button" onclick="likeComment(Number('{{ comment.id }}'))"><i style="font-size:24px" class="fa">&#xf087;</i>({{ comment.likes }})</button>
                         <button class="dislike-button" onclick="dislikeComment(Number('{{ comment.id }}'))">Dislike ({{ comment.dislikes }})</button>
                     </div>
                 </div>
@@ -67,7 +68,7 @@
             if (data.username === username) {
                 commentElement.classList.add('self');
             }
-            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="likeComment(${data.id})">Like (${data.likes})</button><button class="dislike-button" onclick="dislikeComment(${data.id})">Dislike (${data.dislikes})</button></div>`;
+            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="likeComment(${data.id})"><i style="font-size:24px" class="fa">&#xf087;</i>(${data.likes || 0})</button><button class="dislike-button" onclick="dislikeComment(${data.id})">Dislike (${data.dislikes || 0})</button></div>`;
             commentsDiv.appendChild(commentElement);
         });
 
@@ -111,7 +112,7 @@
                     const commentElement = document.getElementById(`comment-${commentId}`);
                     const likeButton = commentElement.querySelector('.like-button');
                     const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]) + 1;
-                    likeButton.textContent = `Like (${likeCount})`;
+                    likeButton.innerHTML = `<i style="font-size:24px" class="fa">&#xf087;</i>(${likeCount})`;
                 } else {
                     console.error(data.message);
                 }
