@@ -1,6 +1,8 @@
 from flask import request, jsonify
 from app import app, db
 from datetime import datetime
+import paho.mqtt.publish as publish
+
 
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -33,6 +35,8 @@ def create_article():
     new_article = Article(title=title, content=content, category=category)
     db.session.add(new_article)
     db.session.commit()
+
+    publish.single(f'projektProtokoly/notifications/{category}', f'New article in {category}: {title}', hostname='broker.hivemq.com')
 
     return jsonify({"message": "Article created successfully", "success": True}), 201
 

@@ -19,6 +19,7 @@
         <div>
             <input id="searchInput" placeholder="Search articles"/>
             <button onclick="searchArticles()">Search</button>
+            <button id="subscribeButton" onclick="toggleSubscription('sport')" class="hidden"></button>
         </div>
         <div id="articles"></div>
         <div id="chatSection" class="hidden">
@@ -31,8 +32,16 @@
 
     <script>
         const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
-        const topic = 'projektProtokoly/chat/sport';
+        const chatTopic = 'projektProtokoly/chat/sport';
+        const notificationTopic = 'projektProtokoly/notifications/sport';
         let username = 'Anonymous User';
+        let user = null;
+        const channel = 'sport';
+
+        function scrollToBottom() {
+            const chatDiv = document.getElementById('chat');
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
 
         client.onMessageArrived = function(message) {
             const chatDiv = document.getElementById('chat');
@@ -44,18 +53,19 @@
             }
             msgElement.innerHTML = `<span class="username">${msg.username}:</span><span class="text">${msg.text}</span>`;
             chatDiv.appendChild(msgElement);
+            scrollToBottom();
         };
 
         client.connect({ onSuccess: function() {
             console.log('Connected to MQTT broker');
-            client.subscribe(topic);
+            client.subscribe(chatTopic);
         }});
 
         function sendMessage() {
             const text = document.getElementById('chatInput').value;
             const message = JSON.stringify({ username, text });
             const mqttMessage = new Paho.MQTT.Message(message);
-            mqttMessage.destinationName = topic;
+            mqttMessage.destinationName = chatTopic;
             client.send(mqttMessage);
             document.getElementById('chatInput').value = '';
         }
@@ -72,9 +82,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.username) {
+                        user = data;
                         username = data.username;
                         console.log('Username set to:', username);
                         document.getElementById('chatSection').classList.remove('hidden');
+                        document.getElementById('subscribeButton').classList.remove('hidden');
+                        updateSubscriptionButton('sport');
                     }
                 })
                 .catch(error => console.error('Error:', error));
@@ -102,6 +115,73 @@
         function searchArticles() {
             const query = document.getElementById('searchInput').value;
             fetchArticles(query);
+        }
+
+        async function toggleSubscription(channel) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('You need to log in to subscribe!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subscriptions', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                let subscriptions = data.subscriptions || [];
+                const subscriptionButton = document.getElementById('subscribeButton');
+
+                if (!subscriptions.includes(channel)) {
+                    const subResponse = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ channel })
+                    });
+
+                    const subData = await subResponse.json();
+                    console.log(subData.message);
+                    client.subscribe(notificationTopic);
+                    subscriptions.push(channel);
+                    subscriptionButton.innerText = 'Unsubscribe from Sport';
+                } else {
+                    const unsubResponse = await fetch('/api/unsubscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ channel })
+                    });
+
+                    const unsubData = await unsubResponse.json();
+                    console.log(unsubData.message);
+                    client.unsubscribe(notificationTopic);
+                    subscriptions = subscriptions.filter(sub => sub !== channel);
+                    subscriptionButton.innerText = 'Subscribe to Sport';
+                }
+
+                user.subscriptions = subscriptions;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function updateSubscriptionButton(channel) {
+            const subscriptionButton = document.getElementById('subscribeButton');
+            if (user && user.subscriptions.includes(channel)) {
+                subscriptionButton.innerText = `Unsubscribe from ${channel}`;
+            } else {
+                subscriptionButton.innerText = `Subscribe to ${channel}`;
+            }
         }
     </script>
 </body>

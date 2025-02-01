@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Page</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <style>
         .hidden {
             display: none;
         }
+
     </style>
 </head>
 <body>
@@ -34,9 +36,36 @@
             <button id="createArticleButton" onclick="window.location.href='/create_article'" class="hidden">Create article</button>
         </div>
         <div id="articles"></div>
+        <div id="messages"></div>
     </main>
 
     <script>
+        const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
+        let username = 'Anonymous User';
+        let user = null;
+
+        client.connect({
+            onSuccess: function() {
+                console.log('Connected to MQTT broker');
+                subscribeToUserTopics();
+            },
+            onFailure: function (error) {
+                console.error('Connection failed:', error);
+            }
+        });
+
+        client.onMessageArrived = function(message) {
+            const messageDiv = document.getElementById('messages');
+            const msgElement = document.createElement('div');
+            msgElement.classList.add('message');
+            msgElement.innerHTML = `<p>${message.payloadString}</p>`;
+            messageDiv.appendChild(msgElement);
+
+            setTimeout(() => {
+                messageDiv.removeChild(msgElement);
+            }, 10000); 
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
             if (token) {
@@ -49,17 +78,44 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.username) {
+                        user = data;
+                        username = data.username;
+                        console.log('Username set to:', username);
                         document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
                         document.getElementById('loginButton').classList.add('hidden');
                         document.getElementById('signinButton').classList.add('hidden');
                         document.getElementById('logoutButton').classList.remove('hidden');
                         document.getElementById('accountButton').classList.remove('hidden');
                         document.getElementById('createArticleButton').classList.remove('hidden');
+                        subscribeToUserTopics();
                     }
                 })
                 .catch(error => console.error('Error:', error));
             }
         });
+
+        function subscribeToUserTopics() {
+            fetch('/api/subscriptions', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    if (Array.isArray(data.subscriptions)) {
+                    data.subscriptions.forEach(channel => {
+                        client.subscribe(`projektProtokoly/notifications/${channel}`);
+                        console.log(`Subscribed to ${channel}`);
+                    });
+                } else {
+                    console.error('Subscriptions data is not an array:', data.subscriptions);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
 
         function searchArticles() {
             const query = document.getElementById('searchInput').value;
@@ -77,6 +133,7 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // Logout user and clear token
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/';

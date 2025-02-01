@@ -10,9 +10,25 @@
         .hidden {
             display: none;
         }
+        .like-button, .dislike-button {
+            background-color: white;
+            border: none;
+            color: grey;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .like-button.clicked, .dislike-button.clicked {
+            color: blue;
+        }
+        .like-button i, .dislike-button i {
+            font-size: 20px;
+        }
     </style>
 </head>
-
 <body>
     <header>
         <h1>{{ article.title }}</h1>
@@ -30,8 +46,8 @@
                     <span class="username">{{ comment.username }}:</span>
                     <span class="text">{{ comment.text }}</span>
                     <div class="actions">
-                        <button class="like-button" onclick="likeComment(Number('{{ comment.id }}'))"><i style="font-size:24px" class="fa">&#xf087;</i>({{ comment.likes }})</button>
-                        <button class="dislike-button" onclick="dislikeComment(Number('{{ comment.id }}'))">Dislike ({{ comment.dislikes }})</button>
+                        <button class="like-button" onclick="toggleLike(Number('{{ comment.id }}'))"><i class="fa fa-thumbs-up"></i>({{ comment.likes }})</button>
+                        <button class="dislike-button" onclick="toggleDislike(Number('{{ comment.id }}'))"><i class="fa fa-thumbs-down"></i>({{ comment.dislikes }})</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -48,7 +64,7 @@
         const socket = io();
         let username = '';
         const room = 'article_{{ article.id }}';
-        const articleId = Number('{{ article.id }}');
+        const articleId = {{ article.id }};
         const token = localStorage.getItem('token');
 
         socket.on('connect', function() {
@@ -68,7 +84,7 @@
             if (data.username === username) {
                 commentElement.classList.add('self');
             }
-            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="likeComment(${data.id})"><i style="font-size:24px" class="fa">&#xf087;</i>(${data.likes || 0})</button><button class="dislike-button" onclick="dislikeComment(${data.id})">Dislike (${data.dislikes || 0})</button></div>`;
+            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="toggleLike(${data.id})"><i class="fa fa-thumbs-up"></i>(${data.likes || 0})</button><button class="dislike-button" onclick="toggleDislike(${data.id})"><i class="fa fa-thumbs-down"></i>(${data.dislikes || 0})</button></div>`;
             commentsDiv.appendChild(commentElement);
         });
 
@@ -99,46 +115,45 @@
             .catch(error => console.error('Error:', error));
         }
 
-        function likeComment(commentId) {
-            fetch(`/api/comments/${commentId}/like`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+        function toggleLike(commentId) {
+            const commentElement = document.getElementById(`comment-${commentId}`);
+            const likeButton = commentElement.querySelector('.like-button');
+            const dislikeButton = commentElement.querySelector('.dislike-button');
+            const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]);
+            const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]);
+
+            if (likeButton.classList.contains('clicked')) {
+                // Remove like
+                likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount - 1})`;
+                likeButton.classList.remove('clicked');
+            } else {
+                likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount + 1})`;
+                likeButton.classList.add('clicked');
+                if (dislikeButton.classList.contains('clicked')) {
+                    dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount - 1})`;
+                    dislikeButton.classList.remove('clicked');
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const commentElement = document.getElementById(`comment-${commentId}`);
-                    const likeButton = commentElement.querySelector('.like-button');
-                    const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]) + 1;
-                    likeButton.innerHTML = `<i style="font-size:24px" class="fa">&#xf087;</i>(${likeCount})`;
-                } else {
-                    console.error(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+            }
         }
 
-        function dislikeComment(commentId) {
-            fetch(`/api/comments/${commentId}/dislike`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+        function toggleDislike(commentId) {
+            const commentElement = document.getElementById(`comment-${commentId}`);
+            const likeButton = commentElement.querySelector('.like-button');
+            const dislikeButton = commentElement.querySelector('.dislike-button');
+            const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]);
+            const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]);
+
+            if (dislikeButton.classList.contains('clicked')) {
+                dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount - 1})`;
+                dislikeButton.classList.remove('clicked');
+            } else {
+                dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount + 1})`;
+                dislikeButton.classList.add('clicked');
+                if (likeButton.classList.contains('clicked')) {
+                    likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount - 1})`;
+                    likeButton.classList.remove('clicked');
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const commentElement = document.getElementById(`comment-${commentId}`);
-                    const dislikeButton = commentElement.querySelector('.dislike-button');
-                    const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]) + 1;
-                    dislikeButton.textContent = `Dislike (${dislikeCount})`;
-                } else {
-                    console.error(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {

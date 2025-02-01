@@ -4,12 +4,14 @@ from app import app, db
 import jwt
 import datetime
 import bcrypt
+import json
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    subscriptions = db.Column(db.Text, nullable=True, default='[]') 
 
 with app.app_context():
     db.create_all()
@@ -142,3 +144,71 @@ def delete_user():
         return jsonify({"message": "Token is invalid!"}), 403
 
 
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    token = request.headers.get('Authorization').split()[1]
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    try:
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        username = decoded_token['user']
+        user = User.query.filter_by(username=username).first()
+
+        channel = request.json.get('channel')
+        if not channel:
+            return jsonify({"message": "Channel is missing!"}), 400
+
+        subscriptions = json.loads(user.subscriptions)
+        if channel not in subscriptions:
+            subscriptions.append(channel)
+            user.subscriptions = json.dumps(subscriptions)
+            db.session.commit()
+        return jsonify({"message": f"Subscribed to {channel}", "subscriptions": subscriptions})
+    except Exception as e:
+        return jsonify({"message": "Token is invalid!"}), 403
+
+@app.route('/api/unsubscribe', methods=['POST'])
+def unsubscribe():
+    token = request.headers.get('Authorization').split()[1]
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    try:
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        username = decoded_token['user']
+        user = User.query.filter_by(username=username).first()
+
+        channel = request.json.get('channel')
+        if not channel:
+            return jsonify({"message": "Channel is missing!"}), 400
+
+        subscriptions = json.loads(user.subscriptions)
+        if channel in subscriptions:
+            subscriptions.remove(channel)
+            user.subscriptions = json.dumps(subscriptions)
+            db.session.commit()
+        return jsonify({"message": f"Unsubscribed from {channel}", "subscriptions": subscriptions})
+    except Exception as e:
+        return jsonify({"message": f"Token is invalid! {str(e)}"}), 403
+    
+@app.route('/api/subscriptions', methods=['GET'])
+def get_subscriptions():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    try:
+        token = token.split()[1]
+        decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        username = decoded_token['user']
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+
+        subscriptions = json.loads(user.subscriptions)
+        return jsonify({"subscriptions": subscriptions}), 200
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token has expired!"}), 403
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Token is invalid!"}), 403
