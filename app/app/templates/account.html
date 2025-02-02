@@ -24,6 +24,7 @@
     <div id="responseMessage"></div>
 
     <script>
+        let userId;
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
             if (token) {
@@ -36,6 +37,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.username) {
+                        userId = data.id;
+                        console.log(`id usera ${userId}`);
                         document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
                     }
                 })
@@ -66,7 +69,7 @@
 
         function deleteAccount() {
             const token = localStorage.getItem('token');
-            fetch('/api/delete_user', {
+            fetch(`/api/delete_user/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
