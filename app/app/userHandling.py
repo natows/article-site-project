@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify,make_response
 from flask_sqlalchemy import SQLAlchemy
 from app import app, db
 import jwt
@@ -64,13 +64,17 @@ def login():
             'user': username,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
         }, app.config['SECRET_KEY'], algorithm="HS256")
-        return jsonify({"token": token}), 200
+        response = make_response(jsonify({"message": "Login successful", "success": True}), 200)
+        response.set_cookie('token', token, httponly=True, secure=True)
+        return response
     else:
         return jsonify({"message": "Invalid credentials", "success": False}), 401
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    return jsonify({"message": "User logged out!"})
+    response = make_response(jsonify({"message": "User logged out!"}), 200)
+    response.set_cookie('token', '', expires=0)
+    return response
 
 @app.route('/api/signin', methods=['POST'])
 def signin():
@@ -90,11 +94,17 @@ def signin():
         'user': username,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
     }, app.config['SECRET_KEY'], algorithm="HS256")
-    return jsonify({"message": "Rejestracja zakończona sukcesem", "token": token, "success": True}), 201
+    
+    response = make_response(jsonify({"message": "Rejestracja zakończona sukcesem", "success": True}), 201)
+    response.set_cookie('token', token, httponly=True, secure=True)
+    return response
 
 @app.route('/api/user', methods=['GET'])
 def get_user():
-    token = request.headers.get('Authorization').split()[1]
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
@@ -104,7 +114,7 @@ def get_user():
         return jsonify({"message": "Token has expired!"}), 403
     except jwt.InvalidTokenError:
         return jsonify({"message": "Token is invalid!"}), 403
-
+    
 @app.route('/api/users', methods=['GET'])
 def get_users():
     users = User.query.all()
@@ -113,7 +123,10 @@ def get_users():
 
 @app.route('/api/update_user/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
-    token = request.headers.get('Authorization').split()[1]
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
@@ -145,7 +158,10 @@ def update_user(user_id):
 
 @app.route('/api/delete_user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    token = request.headers.get('Authorization').split()[1]
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({"message": "Token is missing!"}), 403
+    
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
@@ -164,12 +180,12 @@ def delete_user(user_id):
         return jsonify({"message": "Token is invalid!"}), 403
 
 
-
 @app.route('/api/subscribe', methods=['POST'])
 def subscribe():
-    token = request.headers.get('Authorization').split()[1]
+    token = request.cookies.get('token')
     if not token:
         return jsonify({"message": "Token is missing!"}), 403
+    
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
@@ -186,13 +202,14 @@ def subscribe():
             db.session.commit()
         return jsonify({"message": f"Subscribed to {channel}", "subscriptions": subscriptions})
     except Exception as e:
-        return jsonify({"message": "Token is invalid!"}), 403
+        return jsonify({"message": f"Token is invalid! {str(e)}"}), 403
 
 @app.route('/api/unsubscribe', methods=['POST'])
 def unsubscribe():
-    token = request.headers.get('Authorization').split()[1]
+    token = request.cookies.get('token')
     if not token:
         return jsonify({"message": "Token is missing!"}), 403
+    
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
@@ -213,11 +230,11 @@ def unsubscribe():
     
 @app.route('/api/subscriptions', methods=['GET'])
 def get_subscriptions():
-    token = request.headers.get('Authorization')
+    token = request.cookies.get('token')
     if not token:
         return jsonify({"message": "Token is missing!"}), 403
+    
     try:
-        token = token.split()[1]
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
         user = User.query.filter_by(username=username).first()
@@ -232,3 +249,8 @@ def get_subscriptions():
         return jsonify({"message": "Token has expired!"}), 403
     except jwt.InvalidTokenError:
         return jsonify({"message": "Token is invalid!"}), 403
+
+
+
+
+

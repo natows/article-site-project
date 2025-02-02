@@ -26,37 +26,31 @@
     <script>
         let userId;
         document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                fetch('/api/user', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username) {
-                        userId = data.id;
-                        console.log(`id usera ${userId}`);
-                        document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
+            fetch('/api/user', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    userId = data.id;
+                    console.log(`id usera ${userId}`);
+                    document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
+                }
+            })
+            .catch(error => console.error('Error:', error));
         });
 
         document.getElementById('updateForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const token = localStorage.getItem('token');
             const newUsername = document.getElementById('newUsername').value;
             const newPassword = document.getElementById('newPassword').value;
 
             fetch(`/api/update_user/${userId}`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ username: newUsername, password: newPassword })
             })
@@ -68,18 +62,14 @@
         });
 
         function deleteAccount() {
-            const token = localStorage.getItem('token');
             fetch(`/api/delete_user/${userId}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                credentials: 'include'
             })
             .then(response => response.json())
             .then(data => {
                 document.getElementById('responseMessage').innerText = data.message;
                 if (data.success) {
-                    localStorage.removeItem('token');
                     window.location.href = '/';
                 }
             })
@@ -87,8 +77,14 @@
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/';
+            fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(response => {
+                window.location.href = '/';
+            })
+            .catch(error => console.error('Error:', error));
         }
     </script>
 </body>
