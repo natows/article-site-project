@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Main Page</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <style>
         .hidden {
             display: none;
@@ -81,8 +82,12 @@
             <button id="createArticleButton" onclick="window.location.href='/create_article'" class="hidden">Create article</button>
             <button id="seeUsers" onclick="seeUsers()" class="hidden">See users</button>
         </div>
-        <div id="articles"></div>
+        <div id="chatDiv">
+            <h2>Chat with other users!</h2>
+            <button onclick="redirectToChatRoom('probny chat')">probny chat</button>
+        </div>
         <div id="messages"></div>
+        <div id="articles"></div>
     </main>
 
     <div id="usersModal" class="modal">
@@ -95,7 +100,7 @@
 
     <script>
         const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
-        let username = 'Anonymous User';
+        let username = '';
         let user = null;
         let isAdmin = false;
 
@@ -283,6 +288,9 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        function redirectToChatRoom(roomName) {
+            window.location.href = `/room/${roomName}`;
+        }
 
         function logout() {
             fetch('/api/logout', {

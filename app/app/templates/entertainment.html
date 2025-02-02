@@ -119,6 +119,9 @@
                     document.getElementById('subscribeButton').classList.remove('hidden');
                     updateSubscriptionButton('entertainment');
                 }
+                else {
+                    document.getElementById('openChat').classList.add('hidden');
+                }
             })
             .catch(error => console.error('Error:', error));
             fetchArticles();

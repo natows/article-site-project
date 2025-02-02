@@ -27,12 +27,26 @@
     <div id="responseMessage"></div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/user', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    document.getElementById('author').value = data.username;
+                }
+            })
+            .catch(error => console.error('Error fetching user data:', error));
+        });
+
         document.getElementById('createArticleForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const title = document.getElementById('title').value;
             const content = document.getElementById('content').value;
             const category = document.getElementById('category').value;
-            const author = document.getElementById('author').value;
+            const author = document.getElementById('author').value.trim();
 
             fetch('/api/create', {
                 method: 'POST',

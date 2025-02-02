@@ -126,6 +126,9 @@
                     document.getElementById('subscribeButton').classList.remove('hidden');
                     updateSubscriptionButton('health');
                 }
+                else {
+                    document.getElementById('openChat').classList.add('hidden');
+                }
             })
             .catch(error => console.error('Error:', error));
             fetchArticles();

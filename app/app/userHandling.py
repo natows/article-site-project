@@ -17,7 +17,8 @@ class User(db.Model):
 def create_admin_users():
     admin_users = [
         {"username": "admin1", "password": "admin1password"},
-        {"username": "admin2", "password": "admin2password"}
+        {"username": "admin2", "password": "admin2password"},
+        {"username": "Igor Kałabun", "password": "KotekPiesek2137"}
     ]
 
     for admin in admin_users:

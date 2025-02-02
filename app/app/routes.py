@@ -51,3 +51,8 @@ def article_page(article_id):
     article = Article.query.get_or_404(article_id)
     comments = Comment.query.filter_by(article_id=article_id).order_by(Comment.date_created.asc()).all()
     return render_template('article.html', article=article, comments=comments)
+
+
+@app.route('/room/<room_name>')
+def room_page(room_name):
+    return render_template('room.html', room_name=room_name)
