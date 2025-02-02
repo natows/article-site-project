@@ -69,4 +69,12 @@ def undislike_comment(comment_id):
     db.session.commit()
     return jsonify(success=True, dislikes=comment.dislikes)
 
+
+@comment_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify({"message": "Comment deleted successfully", "success": True}), 200
+
 app.register_blueprint(comment_bp, url_prefix='/api')

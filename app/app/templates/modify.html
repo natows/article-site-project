@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify Article</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Modify Article</h1>
+    </header>
+    <main>
+        <form id="modifyArticleForm">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required><br><br>
+            <label for="content">Content:</label>
+            <textarea id="content" name="content" rows="10" cols="50" required></textarea><br><br>
+            <label for="category">Category:</label>
+            <select id="category" name="category" required>
+                <option value="sport">Sport</option>
+                <option value="technology">Technology</option>
+                <option value="health">Health</option>
+                <option value="entertainment">Entertainment</option>
+            </select><br><br>
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="author" required><br><br>
+            <button type="submit">Save Changes</button>
+            <button type="button" id="deleteArticleButton">Delete Article</button>
+        </form>
+        <div id="responseMessage"></div>
+    </main>
+
+    <!-- Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Are you sure you want to delete this article?</p>
+            <button id="confirmDeleteButton">Yes</button>
+            <button id="cancelDeleteButton">No</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const articleId = "{{ article_id }}";
+
+            if (articleId) {
+                fetch(`/api/articles/${articleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('title').value = data.title;
+                        document.getElementById('content').value = data.content;
+                        document.getElementById('category').value = data.category;
+                        document.getElementById('author').value = data.author;
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            document.getElementById('modifyArticleForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const title = document.getElementById('title').value;
+                const content = document.getElementById('content').value;
+                const category = document.getElementById('category').value;
+                const author = document.getElementById('author').value;
+
+                fetch(`/api/articles/${articleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content, category, author })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('responseMessage').innerText = data.message;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            const deleteModal = document.getElementById('deleteModal');
+            const deleteArticleButton = document.getElementById('deleteArticleButton');
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+            const closeModal = document.getElementsByClassName('close')[0];
+
+            deleteArticleButton.addEventListener('click', function() {
+                deleteModal.style.display = 'block';
+            });
+
+            confirmDeleteButton.addEventListener('click', function() {
+                fetch(`/api/articles/${articleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/';
+                    } else {
+                        document.getElementById('responseMessage').innerText = data.message;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+                deleteModal.style.display = 'none';
+            });
+
+            cancelDeleteButton.addEventListener('click', function() {
+                deleteModal.style.display = 'none';
+            });
+
+            closeModal.addEventListener('click', function() {
+                deleteModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target == deleteModal) {
+                    deleteModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

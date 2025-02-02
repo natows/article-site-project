@@ -105,7 +105,7 @@
                     articlesDiv.innerHTML = '';
                     data.forEach(article => {
                         const articleElement = document.createElement('article');
-                        articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p>`;
+                        articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p><p>Author: ${article.author}</p>`;
                         articlesDiv.appendChild(articleElement);
                     });
                 })

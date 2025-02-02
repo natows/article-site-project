@@ -11,10 +11,26 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False) 
     subscriptions = db.Column(db.Text, nullable=True, default='[]') 
+
+def create_admin_users():
+    admin_users = [
+        {"username": "admin1", "password": "admin1password"},
+        {"username": "admin2", "password": "admin2password"}
+    ]
+
+    for admin in admin_users:
+        existing_user = User.query.filter_by(username=admin["username"]).first()
+        if not existing_user:
+            hashed_password = bcrypt.hashpw(admin["password"].encode('utf-8'), bcrypt.gensalt())
+            new_admin = User(username=admin["username"], password=hashed_password.decode('utf-8'), is_admin=True)
+            db.session.add(new_admin)
+            db.session.commit()
 
 with app.app_context():
     db.create_all()
+    create_admin_users()
 
 
 @app.route('/api/data', methods=['GET'])
@@ -46,7 +62,7 @@ def login():
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         token = jwt.encode({
             'user': username,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
         }, app.config['SECRET_KEY'], algorithm="HS256")
         return jsonify({"token": token}), 200
     else:
@@ -72,7 +88,7 @@ def signin():
     
     token = jwt.encode({
         'user': username,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
     }, app.config['SECRET_KEY'], algorithm="HS256")
     return jsonify({"message": "Rejestracja zakończona sukcesem", "token": token, "success": True}), 201
 
@@ -82,7 +98,8 @@ def get_user():
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
-        return jsonify({"username": username}), 200
+        user = User.query.filter_by(username=username).first()
+        return jsonify({"username": username, "is_admin": user.is_admin}), 200
     except jwt.ExpiredSignatureError:
         return jsonify({"message": "Token has expired!"}), 403
     except jwt.InvalidTokenError:

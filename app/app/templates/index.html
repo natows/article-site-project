@@ -43,6 +43,7 @@
         const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
         let username = 'Anonymous User';
         let user = null;
+        let isAdmin = false
 
         client.connect({
             onSuccess: function() {
@@ -80,8 +81,14 @@
                     if (data.username) {
                         user = data;
                         username = data.username;
+                        if (data.is_admin) {
+                            isAdmin = true;
+                            document.getElementById('welcomeMessage').innerText = `Welcome, Admin ${data.username}!`;
+                        }
+                        else {
+                            document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
+                        }
                         console.log('Username set to:', username);
-                        document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
                         document.getElementById('loginButton').classList.add('hidden');
                         document.getElementById('signinButton').classList.add('hidden');
                         document.getElementById('logoutButton').classList.remove('hidden');
@@ -126,14 +133,21 @@
                     articlesDiv.innerHTML = '';
                     data.forEach(article => {
                         const articleElement = document.createElement('div');
-                        articleElement.innerHTML = `<h2>${article.title}</h2><p>${article.content}</p>`;
+                        articleElement.innerHTML = `
+                            <h2><a href="/article/${article.id}">${article.title}</a></h2>
+                            <p>${article.content}</p>
+                            <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
+                            <p>Author: ${article.author}</p>
+                        `;
+                        if (isAdmin) {
+                            articleElement.innerHTML += `<button onclick="window.location.href='/modify/${article.id}'">Modify</button>`;
+                        }
                         articlesDiv.appendChild(articleElement);
                     });
                 })
                 .catch(error => console.error('Error:', error));
         }
 
-        // Logout user and clear token
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/';

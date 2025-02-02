@@ -39,6 +39,13 @@ def entertainment_page():
     return render_template('entertainment.html')
 
 
+
+@app.route('/modify/<int:article_id>')
+def modify_article(article_id):
+    return render_template('modify.html', article_id=article_id)
+
+
+
 @app.route('/article/<int:article_id>')
 def article_page(article_id):
     article = Article.query.get_or_404(article_id)

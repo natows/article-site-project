@@ -8,7 +8,8 @@ class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    category = db.Column(db.String(50), nullable=False)  
+    category = db.Column(db.String(50), nullable=False) 
+    author = db.Column(db.String(100), nullable=False)  
     date_created = db.Column(db.DateTime, default=datetime.utcnow)  
 
 with app.app_context():
@@ -19,7 +20,7 @@ def search_articles():
     query = request.args.get('query', '')
     category = request.args.get('category', '')
     articles = Article.query.filter(Article.title.contains(query), Article.category.contains(category)).all()
-    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'date_created': article.date_created} for article in articles]
+    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'author': article.author, 'date_created': article.date_created} for article in articles]
     return jsonify(results)
 
 @app.route('/api/create', methods=['POST'])
@@ -28,11 +29,12 @@ def create_article():
     title = data.get('title')
     content = data.get('content')
     category = data.get('category', 'general')
+    author = data.get('author')
 
-    if not title or not content:
-        return jsonify({"message": "Title and content are required", "success": False}), 400
+    if not title or not content or not author:
+        return jsonify({"message": "Title, content and author are required", "success": False}), 400
 
-    new_article = Article(title=title, content=content, category=category)
+    new_article = Article(title=title, content=content, category=category, author=author)
     db.session.add(new_article)
     db.session.commit()
 
@@ -44,5 +46,47 @@ def create_article():
 def get_articles_by_category(category):
     query = request.args.get('query', '')
     articles = Article.query.filter(Article.category == category, Article.title.contains(query)).all()
-    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'date_created': article.date_created} for article in articles]
+    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'author': article.author, 'date_created': article.date_created} for article in articles]
     return jsonify(results)
+
+@app.route('/api/articles/<int:article_id>', methods=['GET'])
+def get_article_by_id(article_id):
+    article = Article.query.get(article_id)
+    if article:
+        result = {
+            'id': article.id,
+            'title': article.title,
+            'content': article.content,
+            'category': article.category,
+            'author': article.author,
+            'date_created': article.date_created
+        }
+        return jsonify(result), 200
+    else:
+        return jsonify({"message": "Article not found"}), 404
+    
+@app.route('/api/articles/<int:article_id>', methods=['PUT'])
+def update_article(article_id):
+    data = request.get_json()
+    article = Article.query.get(article_id)
+    if article:
+        article.title = data.get('title', article.title)
+        article.content = data.get('content', article.content)
+        article.category = data.get('category', article.category)
+        article.author = data.get('author', article.author)
+        db.session.commit()
+        return jsonify({"message": "Article updated successfully"}), 200
+    else:
+        return jsonify({"message": "Article not found"}), 404
+    
+
+@app.route('/api/articles/<int:article_id>', methods=['DELETE'])
+def delete_article(article_id):
+    article = Article.query.get(article_id)
+    if article:
+        db.session.delete(article)
+        db.session.commit()
+        return jsonify({"message": "Article deleted successfully", "success": True}), 200
+    else:
+        return jsonify({"message": "Article not found", "success": False}), 404
+    
