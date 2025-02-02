@@ -32,13 +32,13 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.token) {
-                    localStorage.setItem('token', data.token);
+                if (data.success) {
                     window.location.href = '/';
                 } else {
                     document.getElementById('responseMessage').innerText = data.message;
                 }
-            });
+            })
+            .catch(error => console.error('Error:', error));
         });
     </script>
 </body>

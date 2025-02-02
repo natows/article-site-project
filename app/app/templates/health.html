@@ -71,29 +71,22 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                fetch('/api/user', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username) {
-                        user = data;
-                        username = data.username;
-                        console.log('Username set to:', username);
-                        document.getElementById('chatSection').classList.remove('hidden');
-                        document.getElementById('subscribeButton').classList.remove('hidden');
-                        updateSubscriptionButton('health');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            } else {
-                document.getElementById('chatSection').classList.remove('hidden');
-            }
+            fetch('/api/user', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    user = data;
+                    username = data.username;
+                    console.log('Username set to:', username);
+                    document.getElementById('chatSection').classList.remove('hidden');
+                    document.getElementById('subscribeButton').classList.remove('hidden');
+                    updateSubscriptionButton('health');
+                }
+            })
+            .catch(error => console.error('Error:', error));
             fetchArticles();
         });
 
@@ -118,19 +111,10 @@
         }
 
         async function toggleSubscription(channel) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('You need to log in to subscribe!');
-                return;
-            }
-
             try {
                 const response = await fetch('/api/subscriptions', {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    credentials: 'include'
                 });
 
                 const data = await response.json();
@@ -140,9 +124,9 @@
                 if (!subscriptions.includes(channel)) {
                     const subResponse = await fetch('/api/subscribe', {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ channel })
                     });
@@ -155,9 +139,9 @@
                 } else {
                     const unsubResponse = await fetch('/api/unsubscribe', {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ channel })
                     });
