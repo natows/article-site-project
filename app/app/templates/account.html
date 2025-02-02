@@ -52,7 +52,7 @@
             const newUsername = document.getElementById('newUsername').value;
             const newPassword = document.getElementById('newPassword').value;
 
-            fetch('/api/update_user', {
+            fetch(`/api/update_user/${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

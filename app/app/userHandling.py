@@ -111,13 +111,13 @@ def get_users():
     users_list = [{"id": user.id, "username": user.username, "password": user.password, "is_admin": user.is_admin} for user in users]
     return jsonify(users_list)
 
-@app.route('/api/update_user', methods=['PUT'])
-def update_user():
+@app.route('/api/update_user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
     token = request.headers.get('Authorization').split()[1]
     try:
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(id=user_id).first()
 
         if not user:
             return jsonify({"message": "User not found"}), 404
@@ -125,12 +125,15 @@ def update_user():
         data = request.get_json()
         new_username = data.get('username')
         new_password = data.get('password')
+        new_status = data.get('is_admin')
 
         if new_username:
             user.username = new_username
         if new_password:
             hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
             user.password = hashed_password.decode('utf-8')
+        if new_status:
+            user.is_admin = new_status
 
         db.session.commit()
         return jsonify({"message": "User updated successfully"}), 200
