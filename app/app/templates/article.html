@@ -3,55 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ article.title }}</title>
+    <title>Article Details</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         .hidden {
             display: none;
         }
-        .like-button, .dislike-button {
-            background-color: white;
-            border: none;
-            color: grey;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            margin: 4px 2px;
-            cursor: pointer;
-        }
-        .like-button.clicked, .dislike-button.clicked {
-            color: blue;
-        }
-        .like-button i, .dislike-button i {
-            font-size: 20px;
-        }
     </style>
 </head>
 <body>
     <header>
-        <h1>{{ article.title }}</h1>
+        <h1 id="articleTitle"></h1>
     </header>
     <main>
         <div>
-            <p>{{ article.content }}</p>
-            <p class="date">Published on: {{ article.date_created.strftime('%Y-%m-%d') }}</p>
+            <p id="articleAuthor"></p>
+            <p id="articleContent"></p>
+            <p class="date" id="articleDate"></p>
         </div>
         <div id="commentSection">
             <h2>Comments</h2>
-            <div id="comments">
-                {% for comment in comments %}
-                <div class="message" id="comment-{{ comment.id }}">
-                    <span class="username">{{ comment.username }}:</span>
-                    <span class="text">{{ comment.text }}</span>
-                    <div class="actions">
-                        <button class="like-button" onclick="toggleLike(Number('{{ comment.id }}'))"><i class="fa fa-thumbs-up"></i>({{ comment.likes }})</button>
-                        <button class="dislike-button" onclick="toggleDislike(Number('{{ comment.id }}'))"><i class="fa fa-thumbs-down"></i>({{ comment.dislikes }})</button>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+            <div id="comments"></div>
             <div id="commentInputSection">
                 <input id="commentInput" placeholder="Type a comment"/>
                 <button onclick="sendComment()">Send</button>
@@ -63,11 +36,25 @@
     <script>
         const socket = io();
         let username = '';
-        const room = 'article_{{ article.id }}';
-        const articleId = {{ article.id }};
-        const token = localStorage.getItem('token');
+        const articleId = window.location.pathname.split('/').pop(); 
+        fetch(`/api/articles/${articleId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('articleTitle').textContent = data.title;
+                document.getElementById('articleAuthor').textContent = `Author: ${data.author}`;
+                document.getElementById('articleContent').textContent = data.content;
+                document.getElementById('articleDate').textContent = `Published on: ${new Date(data.date_created).toLocaleDateString()}`;
+                loadComments(); 
+            })
+            .catch(error => console.error('Error fetching article:', error));
+
+        const room = `article_${articleId}`;
 
         socket.on('connect', function() {
+            if (!username) {
+                console.error('Username is not set');
+                return;
+            }
             console.log('Connected to WebSocket');
             socket.emit('join', { username, room });
         });
@@ -84,29 +71,29 @@
             if (data.username === username) {
                 commentElement.classList.add('self');
             }
-            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span><div class="actions"><button class="like-button" onclick="toggleLike(${data.id})"><i class="fa fa-thumbs-up"></i>(${data.likes || 0})</button><button class="dislike-button" onclick="toggleDislike(${data.id})"><i class="fa fa-thumbs-down"></i>(${data.dislikes || 0})</button></div>`;
+            commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span>`;
             commentsDiv.appendChild(commentElement);
         });
-
+        
         function sendComment() {
             const text = document.getElementById('commentInput').value;
             if (!username) {
                 console.error('Username is not set');
                 return;
             }
-            console.log('Sending comment:', { article_id: articleId, username, text });
+
             fetch('/api/comments', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ article_id: articleId, username, text })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    socket.emit('comment', { id: data.id, username, text, room, likes: 0, dislikes: 0 });
+                    socket.emit('comment', { id: data.id, username, text, room });
                     document.getElementById('commentInput').value = '';
                 } else {
                     console.error(data.message);
@@ -115,74 +102,52 @@
             .catch(error => console.error('Error:', error));
         }
 
-        function toggleLike(commentId) {
-            const commentElement = document.getElementById(`comment-${commentId}`);
-            const likeButton = commentElement.querySelector('.like-button');
-            const dislikeButton = commentElement.querySelector('.dislike-button');
-            const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]);
-            const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]);
-
-            if (likeButton.classList.contains('clicked')) {
-                // Remove like
-                likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount - 1})`;
-                likeButton.classList.remove('clicked');
-            } else {
-                likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount + 1})`;
-                likeButton.classList.add('clicked');
-                if (dislikeButton.classList.contains('clicked')) {
-                    dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount - 1})`;
-                    dislikeButton.classList.remove('clicked');
-                }
-            }
-        }
-
-        function toggleDislike(commentId) {
-            const commentElement = document.getElementById(`comment-${commentId}`);
-            const likeButton = commentElement.querySelector('.like-button');
-            const dislikeButton = commentElement.querySelector('.dislike-button');
-            const likeCount = parseInt(likeButton.textContent.match(/\d+/)[0]);
-            const dislikeCount = parseInt(dislikeButton.textContent.match(/\d+/)[0]);
-
-            if (dislikeButton.classList.contains('clicked')) {
-                dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount - 1})`;
-                dislikeButton.classList.remove('clicked');
-            } else {
-                dislikeButton.innerHTML = `<i class="fa fa-thumbs-down"></i>(${dislikeCount + 1})`;
-                dislikeButton.classList.add('clicked');
-                if (likeButton.classList.contains('clicked')) {
-                    likeButton.innerHTML = `<i class="fa fa-thumbs-up"></i>(${likeCount - 1})`;
-                    likeButton.classList.remove('clicked');
-                }
-            }
+        function loadComments() {
+            fetch(`/api/comments/${articleId}`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const commentsDiv = document.getElementById('comments');
+                commentsDiv.innerHTML = '';
+                data.forEach(comment => {
+                    const commentElement = document.createElement('div');
+                    commentElement.classList.add('message');
+                    commentElement.id = `comment-${comment.id}`;
+                    commentElement.innerHTML = `<span class="username">${comment.username}:</span><span class="text">${comment.text}</span>`;
+                    commentsDiv.appendChild(commentElement);
+                });
+            })
+            .catch(error => console.error('Error fetching comments:', error));
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (token) {
-                fetch('/api/user', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username) {
-                        username = data.username;
-                        console.log('Username set to:', username);
-                        socket.emit('join', { username, room });
-                        document.getElementById('commentInputSection').classList.remove('hidden');
-                        document.getElementById('loginPrompt').classList.add('hidden');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            } else {
+            fetch('/api/user', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    username = data.username;
+                    console.log('Username set to:', username);
+                    socket.emit('join', { username, room });
+                
+                    document.getElementById('commentInputSection').classList.remove('hidden');
+                    document.getElementById('loginPrompt').classList.add('hidden');
+                } else {
+                    document.getElementById('commentInputSection').classList.add('hidden');
+                    document.getElementById('loginPrompt').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 document.getElementById('commentInputSection').classList.add('hidden');
                 document.getElementById('loginPrompt').classList.remove('hidden');
-                document.querySelectorAll('.like-button, .dislike-button').forEach(button => {
-                    button.classList.add('hidden');
-                });
-            }
+            });
         });
+
     </script>
 </body>
 </html>

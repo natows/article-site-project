@@ -204,7 +204,7 @@ def subscribe():
     except Exception as e:
         return jsonify({"message": f"Token is invalid! {str(e)}"}), 403
 
-@app.route('/api/unsubscribe', methods=['POST'])
+@app.route('/api/unsubscribe', methods=['DELETE'])
 def unsubscribe():
     token = request.cookies.get('token')
     if not token:

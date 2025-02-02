@@ -9,6 +9,38 @@
         .hidden {
             display: none;
         }
+        #chat {
+            border: 2px solid #ccc;
+            padding: 10px;
+            width: 200px;
+            height: 150px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            max-width: 80%; 
+            word-wrap: break-word;
+        }
+
+        .self {
+            align-self: flex-end; 
+            background: #d1e7fd;
+            padding: 8px;
+        }
+
+        .others {
+            align-self: flex-start; 
+            background: #e1e1e1;
+            padding: 8px;
+        }
+
     </style>
 </head>
 <body>
@@ -17,17 +49,21 @@
     </header>
     <main>
         <div>
-            <input id="searchInput" placeholder="Search articles"/>
-            <button onclick="searchArticles()">Search</button>
-            <button id="subscribeButton" onclick="toggleSubscription('health')" class="hidden"></button>
+            <div>
+                <input id="searchInput" placeholder="Search articles"/>
+                <button onclick="searchArticles()">Search</button>
+                <button id="subscribeButton" onclick="toggleSubscription('health')" class="hidden"></button>
+            </div>
+            <button id="openChat" onclick="openChat()">Open chat</button>
+            <div id="chatSection" class="hidden">
+                <h2>Live Chat</h2>
+                <div id="chat"></div>
+                <input id="chatInput" placeholder="Type a message"/>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            <button class="hidden" id="closeChat" onclick="openChat()">Close chat</button>
         </div>
         <div id="articles"></div>
-        <div id="chatSection" class="hidden">
-            <h2>Live Chat</h2>
-            <div id="chat"></div>
-            <input id="chatInput" placeholder="Type a message"/>
-            <button onclick="sendMessage()">Send</button>
-        </div>
     </main>
 
     <script>
@@ -48,13 +84,18 @@
             const msg = JSON.parse(message.payloadString);
             const msgElement = document.createElement('div');
             msgElement.classList.add('message');
+
             if (msg.username === username) {
                 msgElement.classList.add('self');
+            } else {
+                msgElement.classList.add('others');
             }
-            msgElement.innerHTML = `<span class="username">${msg.username}:</span><span class="text">${msg.text}</span>`;
+
+            msgElement.innerHTML = `<span class="username">${msg.username}:</span> <span class="text">${msg.text}</span>`;
             chatDiv.appendChild(msgElement);
             scrollToBottom();
         };
+
 
         client.connect({ onSuccess: function() {
             console.log('Connected to MQTT broker');
@@ -81,7 +122,7 @@
                     user = data;
                     username = data.username;
                     console.log('Username set to:', username);
-                    document.getElementById('chatSection').classList.remove('hidden');
+                    document.getElementById('copenChat').classList.remove('hidden');
                     document.getElementById('subscribeButton').classList.remove('hidden');
                     updateSubscriptionButton('health');
                 }
@@ -89,6 +130,13 @@
             .catch(error => console.error('Error:', error));
             fetchArticles();
         });
+
+        function openChat(){
+            document.getElementById('chatSection').classList.toggle('hidden');
+            document.getElementById('openChat').classList.toggle('hidden');
+            document.getElementById('closeChat').classList.toggle('hidden');
+        }
+
 
         function fetchArticles(query = '') {
             fetch(`/api/articles/health?query=${query}`)
@@ -98,7 +146,8 @@
                     articlesDiv.innerHTML = '';
                     data.forEach(article => {
                         const articleElement = document.createElement('article');
-                        articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${article.content}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p><p>Author: ${article.author}</p>`;
+                        const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
+                        articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${truncatedContent}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p><p>Author: ${article.author}</p>`;
                         articlesDiv.appendChild(articleElement);
                     });
                 })
@@ -138,7 +187,7 @@
                     subscriptionButton.innerText = 'Unsubscribe from Health';
                 } else {
                     const unsubResponse = await fetch('/api/unsubscribe', {
-                        method: 'POST',
+                        method: 'DELETE',
                         credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json'

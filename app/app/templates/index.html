@@ -57,6 +57,20 @@
         <div id="welcomeMessage"></div>
         <div>
             <input id="searchInput" placeholder="Browse articles"/>
+        </div>
+        <div>
+            <label for="filterDate">Date:</label>
+            <input type="date" id="filterDate" />
+            <label for="filterAuthor">Author:</label>
+            <input type="text" id="filterAuthor" placeholder="Author" />
+            <label for="filterCategory">Category:</label>
+            <select id="filterCategory">
+                <option value="">All</option>
+                <option value="sport">Sport</option>
+                <option value="technology">Technology</option>
+                <option value="health">Health</option>
+                <option value="entertainment">Entertainment</option>
+            </select>
             <button onclick="searchArticles()">Search</button>
         </div>
         <div>
@@ -175,6 +189,7 @@
                 }
             })
             .catch(error => console.error('Error:', error));
+            fetchArticles(); 
         });
 
         function subscribeToUserTopics() {
@@ -197,18 +212,65 @@
             .catch(error => console.error('Error:', error));
         }
 
+        function fetchArticles() {
+            fetch('/api/articles')
+                .then(response => response.json())
+                .then(data => {
+                    const articlesDiv = document.getElementById('articles');
+                    articlesDiv.innerHTML = '';
+                    const latest = document.createElement('h2');
+                    latest.innerHTML = "Latest articles"
+                    articlesDiv.appendChild(latest);
+                    const latestArticles = data.slice(0, 5);
+                    latestArticles.forEach(article => {
+                        const articleElement = document.createElement('div');
+                        const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
+                        articleElement.innerHTML = `
+                            <h2><a href="/article/${article.id}">${article.title}</a></h2>
+                            <p>${truncatedContent}</p>
+                            <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
+                            <p>Author: ${article.author}</p>
+                        `;
+                        if (isAdmin || article.author === username) {
+                            articleElement.innerHTML += `<button onclick="window.location.href='/modify/${article.id}'">Modify</button>`;
+                        }
+                        articlesDiv.appendChild(articleElement);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         function searchArticles() {
             const query = document.getElementById('searchInput').value;
-            fetch(`/api/search?query=${query}`)
+            const filterDate = document.getElementById('filterDate').value; 
+            const filterAuthor = document.getElementById('filterAuthor').value;  
+            const filterCategory = document.getElementById('filterCategory').value;  
+
+            let url = `/api/search?query=${query}`;
+            
+            if (filterDate) {
+                url += `&date=${filterDate}`;
+            }
+        
+            if (filterAuthor) {
+                url += `&author=${filterAuthor}`;
+            }
+           
+            if (filterCategory) {
+                url += `&category=${filterCategory}`;
+            }
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     const articlesDiv = document.getElementById('articles');
                     articlesDiv.innerHTML = '';
                     data.forEach(article => {
                         const articleElement = document.createElement('div');
+                        const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `
                             <h2><a href="/article/${article.id}">${article.title}</a></h2>
-                            <p>${article.content}</p>
+                            <p>${truncatedContent}</p>
                             <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
                             <p>Author: ${article.author}</p>
                         `;
@@ -221,6 +283,7 @@
                 .catch(error => console.error('Error:', error));
         }
 
+
         function logout() {
             fetch('/api/logout', {
                 method: 'POST',
@@ -232,7 +295,6 @@
             .catch(error => console.error('Error:', error));
         }
 
-        // Modal close functionality
         const modal = document.getElementById('usersModal');
         const span = document.getElementsByClassName('close')[0];
 

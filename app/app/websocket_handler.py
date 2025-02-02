@@ -16,6 +16,7 @@ def handle_disconnect():
 def handle_join(data):
     room = data['room']
     join_room(room)
+    print(f'{data["username"]} has joined the room {room} .')
     emit('message', {'msg': f'{data["username"]} has joined the room.'}, room=room)
 
 @socketio.on('leave')

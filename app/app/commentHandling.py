@@ -1,6 +1,7 @@
 from flask import request, jsonify, Blueprint
 from app import app, db
 from datetime import datetime
+import jwt
 
 
 comment_bp = Blueprint('comment', __name__)
@@ -39,35 +40,35 @@ def get_comments(article_id):
     results = [{'id': comment.id, 'username': comment.username, 'text': comment.text, 'date_created': comment.date_created, 'likes': comment.likes, 'dislikes': comment.dislikes} for comment in comments]
     return jsonify(results)
 
-@comment_bp.route('/comments/<int:comment_id>/like', methods=['POST'])
-def like_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    comment.likes += 1
-    db.session.commit()
-    return jsonify(success=True, likes=comment.likes)
+# @comment_bp.route('/comments/<int:comment_id>/like', methods=['POST'])
+# def like_comment(comment_id):
+#     comment = Comment.query.get_or_404(comment_id)
+#     comment.likes += 1
+#     db.session.commit()
+#     return jsonify(success=True, likes=comment.likes)
 
-@comment_bp.route('/comments/<int:comment_id>/dislike', methods=['POST'])
-def dislike_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    comment.dislikes += 1
-    db.session.commit()
-    return jsonify(success=True, dislikes=comment.dislikes)
+# @comment_bp.route('/comments/<int:comment_id>/dislike', methods=['POST'])
+# def dislike_comment(comment_id):
+#     comment = Comment.query.get_or_404(comment_id)
+#     comment.dislikes += 1
+#     db.session.commit()
+#     return jsonify(success=True, dislikes=comment.dislikes)
 
-@comment_bp.route('/comments/<int:comment_id>/unlike', methods=['POST'])
-def unlike_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    if comment.likes > 0:
-        comment.likes -= 1
-    db.session.commit()
-    return jsonify(success=True, likes=comment.likes)
+# @comment_bp.route('/comments/<int:comment_id>/unlike', methods=['POST'])
+# def unlike_comment(comment_id):
+#     comment = Comment.query.get_or_404(comment_id)
+#     if comment.likes > 0:
+#         comment.likes -= 1
+#     db.session.commit()
+#     return jsonify(success=True, likes=comment.likes)
 
-@comment_bp.route('/comments/<int:comment_id>/undislike', methods=['POST'])
-def undislike_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    if comment.dislikes > 0:
-        comment.dislikes -= 1
-    db.session.commit()
-    return jsonify(success=True, dislikes=comment.dislikes)
+# @comment_bp.route('/comments/<int:comment_id>/undislike', methods=['POST'])
+# def undislike_comment(comment_id):
+#     comment = Comment.query.get_or_404(comment_id)
+#     if comment.dislikes > 0:
+#         comment.dislikes -= 1
+#     db.session.commit()
+#     return jsonify(success=True, dislikes=comment.dislikes)
 
 
 @comment_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
@@ -76,5 +77,41 @@ def delete_comment(comment_id):
     db.session.delete(comment)
     db.session.commit()
     return jsonify({"message": "Comment deleted successfully", "success": True}), 200
+
+
+
+
+
+
+@comment_bp.route('/comments/<int:comment_id>/like', methods=['PATCH'])
+def like_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    comment.likes += 1
+    db.session.commit()
+    return jsonify(success=True, likes=comment.likes)
+
+@comment_bp.route('/comments/<int:comment_id>/dislike', methods=['PATCH'])
+def dislike_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    comment.dislikes += 1
+    db.session.commit()
+    return jsonify(success=True, dislikes=comment.dislikes)
+
+@comment_bp.route('/comments/<int:comment_id>/like', methods=['DELETE'])
+def unlike_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.likes > 0:
+        comment.likes -= 1
+    db.session.commit()
+    return jsonify(success=True, likes=comment.likes)
+
+@comment_bp.route('/comments/<int:comment_id>/dislike', methods=['DELETE'])
+def undislike_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.dislikes > 0:
+        comment.dislikes -= 1
+    db.session.commit()
+    return jsonify(success=True, dislikes=comment.dislikes)
+
 
 app.register_blueprint(comment_bp, url_prefix='/api')

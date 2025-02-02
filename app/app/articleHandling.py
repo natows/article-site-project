@@ -19,9 +19,34 @@ with app.app_context():
 def search_articles():
     query = request.args.get('query', '')
     category = request.args.get('category', '')
-    articles = Article.query.filter(Article.title.contains(query), Article.category.contains(category)).all()
-    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'author': article.author, 'date_created': article.date_created} for article in articles]
+    author = request.args.get('author', '')
+    date = request.args.get('date', '')
+
+    articles_query = Article.query.filter(Article.title.contains(query))
+
+    if category:
+        articles_query = articles_query.filter(Article.category.contains(category))
+    
+    if author:
+        articles_query = articles_query.filter(Article.author.contains(author))
+    
+    if date:
+        date_obj = datetime.strptime(date, '%Y-%m-%d')
+        articles_query = articles_query.filter(Article.date_created >= date_obj)
+
+    articles = articles_query.all()
+
+    results = [{
+        'id': article.id,
+        'title': article.title,
+        'content': article.content,
+        'category': article.category,
+        'author': article.author,
+        'date_created': article.date_created.isoformat() 
+    } for article in articles]
+    
     return jsonify(results)
+
 
 @app.route('/api/create', methods=['POST'])
 def create_article():
@@ -89,4 +114,22 @@ def delete_article(article_id):
         return jsonify({"message": "Article deleted successfully", "success": True}), 200
     else:
         return jsonify({"message": "Article not found", "success": False}), 404
+    
+
+
+@app.route('/api/articles', methods=['GET'])
+def get_articles():
+    articles = Article.query.order_by(Article.date_created.desc())
+    
+    result = [{
+        'id': article.id,
+        'title': article.title,
+        'content': article.content,
+        'category': article.category,
+        'author': article.author,
+        'date_created': article.date_created.isoformat() 
+    } for article in articles]
+
+    return jsonify(result)
+
     
