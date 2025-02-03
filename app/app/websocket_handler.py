@@ -35,7 +35,17 @@ def handle_leave(data):
 @socketio.on('comment')
 def handle_comment(data):
     room = data['room']
-    emit('comment', {'username': data['username'], 'text': data['text']}, room=room)
+    emit('comment', {'id':data['id'],'username': data['username'], 'text': data['text']}, room=room)
+
+@socketio.on('delete_comment')
+def handle_delete_comment(data):
+    room = data['room']
+    emit('delete_comment', {'id': data['id']}, room=room)
+
+@socketio.on('edit_comment')
+def handle_edit_comment(data):
+    room = data['room']
+    emit('edit_comment', {'id': data['id'], 'text': data['text']}, room=room)
 
 
 @socketio.on('message')

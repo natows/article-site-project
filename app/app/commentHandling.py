@@ -32,7 +32,15 @@ def add_comment():
     db.session.add(new_comment)
     db.session.commit()
 
-    return jsonify({"message": "Comment added successfully", "success": True}), 201
+    return jsonify({
+        "message": "Comment added successfully",
+        "success": True,
+        "id": new_comment.id,
+        "article_id": new_comment.article_id,
+        "username": new_comment.username,
+        "text": new_comment.text,
+        "date_created": new_comment.date_created
+    }), 201
 
 @app.route('/api/comments/<int:article_id>', methods=['GET'])
 def get_comments(article_id):
@@ -71,7 +79,7 @@ def get_comments(article_id):
 #     return jsonify(success=True, dislikes=comment.dislikes)
 
 
-@comment_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
 def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     db.session.delete(comment)
@@ -79,11 +87,16 @@ def delete_comment(comment_id):
     return jsonify({"message": "Comment deleted successfully", "success": True}), 200
 
 
+@app.route('/api/comments/<int:comment_id>', methods=['PUT'])
+def edit_comment(comment_id):
+    data = request.get_json()
+    comment = Comment.query.get_or_404(comment_id)
+    comment.text = data.get('text', comment.text)
+    db.session.commit()
+    return jsonify({"message": "Comment updated successfully", "success": True}), 200
 
 
-
-
-@comment_bp.route('/comments/<int:comment_id>/like', methods=['PATCH'])
+@comment_bp.route('api/comments/<int:comment_id>/like', methods=['PATCH'])
 def like_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     comment.likes += 1
