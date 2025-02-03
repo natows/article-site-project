@@ -81,7 +81,6 @@
         <button onclick="window.location.href='/technology'">Technology</button>
         <button onclick="window.location.href='/health'">Health</button>
         <button onclick="window.location.href='/entertainment'">Entertainment</button>
-        <button onclick="window.location.href='/proba'">proba</button>
     </nav>
     <main>
         <div>
@@ -124,7 +123,6 @@
     </div>
 
     <script>
-        // const eventSource = new EventSource('/sse');
         const client = new Paho.MQTT.Client('broker.hivemq.com', 8000, 'clientId-' + Math.random().toString(16).substr(2, 8));
         let username = '';
         let user = null;
@@ -139,13 +137,6 @@
                 console.error('Connection failed:', error);
             }
         });
-        // eventSource.onmessage = function(event) {
-        //     const messagesDiv = document.getElementById('messages');
-        //     const message = JSON.parse(event.data);
-        //     const messageElement = document.createElement('div');
-        //     messageElement.textContent = message.message;
-        //     messagesDiv.appendChild(messageElement);
-        // };
 
         client.onMessageArrived = function(message) {
             const messageDiv = document.getElementById('messages');
@@ -209,6 +200,7 @@
                 if (data.username) {
                     user = data;
                     username = data.username;
+                    console.log(data.subscribed_rooms)
                     if (data.is_admin) {
                         isAdmin = true;
                         document.getElementById('welcomeMessage').innerText = `Welcome, Admin ${data.username}!`;
@@ -224,6 +216,7 @@
                     document.getElementById('accountButton').classList.remove('hidden');
                     document.getElementById('createArticleButton').classList.remove('hidden');
                     document.getElementById('chatDiv').classList.remove('hidden');
+                    subscribeToChats(data.subscribed_rooms);
                     fetchRooms();
                     subscribeToUserTopics();
                     
@@ -426,6 +419,23 @@
             window.location.href = `/room/${roomName}`;
         }
 
+        function subscribeToChats(rooms){
+            rooms.forEach(room => {
+                const eventSource = new EventSource(`/sse/subscribe/${room}`);
+                console.log("subscribed to room", room);
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const messageDiv = document.getElementById('messages');
+                    const messageElement = document.createElement('div');
+                    messageElement.textContent = `New message in ${room}: ${data.message}`;
+                    messageDiv.appendChild(messageElement);
+                    setTimeout(() => {
+                        messageDiv.removeChild(messageElement);
+                    }, 5000);
+                };
+            });
+        }
+
         function createRoom() {
             const roomName = prompt('Enter the name of the room:');
             if (roomName) {
@@ -447,7 +457,6 @@
                 .catch(error => console.error('Error:', error));
             }
         }
-
 
         function logout() {
             fetch('/api/logout', {

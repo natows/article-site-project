@@ -87,7 +87,6 @@
 
         eventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            console.log(event.data)
             const messageDiv = document.getElementById('messageDiv');
             messageDiv.innerHTML = "New post on the chat!";
             setTimeout(() => {

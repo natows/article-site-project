@@ -57,6 +57,3 @@ def article_page(article_id):
 def room_page(room_name):
     return render_template('room.html', room_name=room_name)
 
-@app.route('/proba')
-def proba_page():
-    return render_template('proba.html')

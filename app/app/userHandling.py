@@ -5,6 +5,8 @@ import jwt
 import datetime
 import bcrypt
 import json
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.mutable import MutableList
 
 
 class User(db.Model):
@@ -13,6 +15,8 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, default=False) 
     subscriptions = db.Column(db.Text, nullable=True, default='[]') 
+    subscribed_rooms = db.Column(MutableList.as_mutable(JSON), default=[])
+
 
 def create_admin_users():
     admin_users = [
@@ -110,7 +114,7 @@ def get_user():
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
         user = User.query.filter_by(username=username).first()
-        return jsonify({"id": user.id, "username": username, "is_admin": user.is_admin, "subscriptions": user.subscriptions}), 200
+        return jsonify({"id": user.id, "username": username, "is_admin": user.is_admin, "subscriptions": user.subscriptions, "subscribed_rooms": user.subscribed_rooms}), 200
     except jwt.ExpiredSignatureError:
         return jsonify({"message": "Token has expired!"}), 403
     except jwt.InvalidTokenError:

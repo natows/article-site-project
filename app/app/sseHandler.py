@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, request, jsonify
 import json
 from app import db
-from app.chatRoomHandling import ChatRoom
+from app.userHandling import User
 import queue
 
 
@@ -48,18 +48,22 @@ def subscribe(room_name):
     if room_name not in subscribers:
         subscribers[room_name] = []
     
-    # Dodajemy subskrybenta do pokoju
     subscribers[room_name].append(q)
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if room_name not in user.subscribed_rooms:
+            user.subscribed_rooms.append(room_name)
+            db.session.commit()
+
 
     return jsonify({"message": f"Subscribed {username} to {room_name}", "success": True}), 200
 
-# Strumieniowanie wiadomości do subskrybentów pokoju
+
 @sse.route('/sse/subscribe/<room_name>', methods=['GET'])
 def get_messages(room_name):
-    # Wysyłamy strumień danych do klienta
     return event_stream(room_name)
 
-# Wysyłanie wiadomości do pokoju
 @sse.route('/sse/send_message/<room_name>', methods=['POST'])
 def send_message(room_name):
     data = request.get_json()

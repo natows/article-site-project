@@ -11,7 +11,6 @@ class ChatRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
-    subscribers = db.Column(MutableList.as_mutable(JSON), default=list)
 
 
     
@@ -29,7 +28,7 @@ with app.app_context():
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():
     rooms = ChatRoom.query.all()
-    results = [{'id': room.id, 'name': room.name, 'date_created': room.date_created, 'subscribers': room.subscribers} for room in rooms]
+    results = [{'id': room.id, 'name': room.name, 'date_created': room.date_created} for room in rooms]
     return jsonify(results)
 
 @app.route('/api/create_room', methods=['POST'])
