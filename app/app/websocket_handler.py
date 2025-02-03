@@ -1,9 +1,12 @@
-from flask import request
+from flask import request, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from app import app,db
 from app.messageHandling import Message
-
+import time, json
+from app.sseHandler import notify_subscribers
 socketio = SocketIO(app)
+
+
 
 @socketio.on('connect')
 def handle_connect():
@@ -51,6 +54,8 @@ def handle_message(data):
         'id': new_message.id 
     }, room=room)
 
+    notify_subscribers(room, {"message": text})
+
 
 
 @socketio.on('delete_message')
@@ -78,3 +83,7 @@ def handle_edit_messade(data):
         db.session.commit()
 
         emit('edit_message', {'message_id': message_id, 'text': new_text}, room=room)
+
+
+
+

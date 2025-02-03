@@ -110,7 +110,7 @@ def get_user():
         decoded_token = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         username = decoded_token['user']
         user = User.query.filter_by(username=username).first()
-        return jsonify({"id": user.id, "username": username, "is_admin": user.is_admin}), 200
+        return jsonify({"id": user.id, "username": username, "is_admin": user.is_admin, "subscriptions": user.subscriptions}), 200
     except jwt.ExpiredSignatureError:
         return jsonify({"message": "Token has expired!"}), 403
     except jwt.InvalidTokenError:

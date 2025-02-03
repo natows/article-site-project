@@ -69,6 +69,8 @@
 <body>
     <header>
         <h1 id="roomName"></h1>
+        <button onclick="subscribeChat()">Subscribe the chat</button>
+        <div id="messageDiv"></div>
     </header>
     <main>
         <div id="chat"></div>
@@ -81,6 +83,18 @@
         const roomName = "{{ room_name }}"; 
         document.getElementById('roomName').textContent = `Chat: ${roomName}`;
         let username = '';
+        const eventSource = new EventSource(`/sse/subscribe/${roomName}`);
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log(event.data)
+            const messageDiv = document.getElementById('messageDiv');
+            messageDiv.innerHTML = "New post on the chat!";
+            setTimeout(() => {
+                messageDiv.innerHTML = "";
+            }, 3000);
+            
+        };
 
         socket.on('connect', function() {
             if (!username) {
@@ -218,6 +232,24 @@
                 messageElement.remove();  
             }
         });
+
+
+        function subscribeChat() {
+            fetch(`/sse/subscribe/${roomName}`, {
+                method: 'POST', 
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user: username }) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => console.error('Error subscribing:', error));
+        }
+
     </script>
 </body>
 </html>

@@ -122,7 +122,7 @@
                     user = data;
                     username = data.username;
                     console.log('Username set to:', username);
-                    document.getElementById('copenChat').classList.remove('hidden');
+                    document.getElementById('openChat').classList.remove('hidden');
                     document.getElementById('subscribeButton').classList.remove('hidden');
                     updateSubscriptionButton('health');
                 }
@@ -139,7 +139,6 @@
             document.getElementById('openChat').classList.toggle('hidden');
             document.getElementById('closeChat').classList.toggle('hidden');
         }
-
 
         function fetchArticles(query = '') {
             fetch(`/api/articles/health?query=${query}`)

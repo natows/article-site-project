@@ -48,7 +48,7 @@
             <div>
                 <input id="searchInput" placeholder="Search articles"/>
                 <button onclick="searchArticles()">Search</button>
-                <button id="subscribeButton" onclick="toggleSubscription('technology')" class="hidden"></button>
+                <button id="subscribeButton" onclick="toggleSubscription('technology')" class="hidden">Subscribe to technology</button>
             </div>
             <button id="openChat" onclick="openChat()">Open chat</button>
             <div id="chatSection" class="hidden">
@@ -116,6 +116,7 @@
                     username = data.username;
                     console.log('Username set to:', username);
                     document.getElementById('openChat').classList.remove('hidden');
+                    console.log(user.subscriptions)
                     document.getElementById('subscribeButton').classList.remove('hidden');
                     updateSubscriptionButton('technology');
                 }
