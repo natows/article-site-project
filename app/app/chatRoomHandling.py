@@ -9,6 +9,13 @@ class ChatRoom(db.Model):
 
 with app.app_context():
     db.create_all()
+    if not ChatRoom.query.filter_by(name="Example Room 1").first():
+        example_room1 = ChatRoom(name="Example Room 1")
+        db.session.add(example_room1)
+    if not ChatRoom.query.filter_by(name="Example Room 2").first():
+        example_room2 = ChatRoom(name="Example Room 2")
+        db.session.add(example_room2)
+    db.session.commit()
 
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():
@@ -29,3 +36,26 @@ def create_room():
     db.session.commit()
 
     return jsonify({"message": "Room created successfully", "success": True}), 201
+
+
+@app.route('/api/delete_room', methods=['POST'])
+def delete_room():
+    data = request.get_json()
+    room_id = data.get('id')
+
+    if not room_id:
+        return jsonify({"message": "Room ID is required", "success": False}), 400
+
+    room = ChatRoom.query.get(room_id)
+
+    if not room:
+        return jsonify({"message": "Room not found", "success": False}), 404
+
+    db.session.delete(room)
+    db.session.commit()
+
+    return jsonify({"message": "Room deleted successfully", "success": True}), 200
+
+
+
+

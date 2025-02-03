@@ -83,14 +83,13 @@
         </div>
         <div id="chatDiv">
             <h2>Chat with other users!</h2>
-            <div id="chats">
-                <button onclick="redirectToChatRoom('probny chat')">probny chat</button>
-                <button onclick="redirectToChatRoom('chat2')">chat 2</button>
-                <button onclick="createRoom()">Create a new chat!</button>
-            </div>
+            <div id="chats"></div>
+            <button id="createRoomButton" onclick="createRoom()">Create a new chat!</button>
         </div>
         <div id="messages"></div>
+
         <div id="articles"></div>
+
     </main>
 
     <div id="usersModal" class="modal">
@@ -193,7 +192,9 @@
                     document.getElementById('logoutButton').classList.remove('hidden');
                     document.getElementById('accountButton').classList.remove('hidden');
                     document.getElementById('createArticleButton').classList.remove('hidden');
+                    fetchRooms();
                     subscribeToUserTopics();
+                    
                 }
             })
             .catch(error => console.error('Error:', error));
@@ -291,10 +292,7 @@
                 .catch(error => console.error('Error:', error));
         }
 
-        function redirectToChatRoom(roomName) {
-            window.location.href = `/room/${roomName}`;
-        }
-        function loadRooms(){
+        function fetchRooms() {
             fetch('/api/rooms', {
                 method: 'GET',
                 credentials: 'include'
@@ -305,15 +303,21 @@
                 chats.innerHTML = '';
                 data.forEach(room => {
                     const newChat = document.createElement('button');
-                    newChat.innerText = room;
+                    newChat.innerText = room.name;
                     newChat.onclick = function() {
-                        redirectToChatRoom(room);
+                        redirectToChatRoom(room.name);
                     }
                     chats.appendChild(newChat);
                 });
+                
             })
             .catch(error => console.error('Error:', error));
         }
+
+        function redirectToChatRoom(roomName) {
+            window.location.href = `/room/${roomName}`;
+        }
+
         function createRoom() {
             const roomName = prompt('Enter the name of the room:');
             if (roomName) {
@@ -327,7 +331,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        loadRooms();
+                        fetchRooms();
                     } else {
                         alert(data.message);
                     }
@@ -335,6 +339,7 @@
                 .catch(error => console.error('Error:', error));
             }
         }
+
 
         function logout() {
             fetch('/api/logout', {

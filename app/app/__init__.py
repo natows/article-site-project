@@ -11,6 +11,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-from . import userHandling, routes, articleHandling, mqtt_handler, websocket_handler
+from . import userHandling, routes, articleHandling, mqtt_handler, websocket_handler, chatRoomHandling
 
 
