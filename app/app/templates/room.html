@@ -167,7 +167,7 @@
                 console.error('Message is empty');
                 return;
             }
-            socket.emit('message', { username, text, room: roomName });
+            socket.emit('message', { username: username, text, room: roomName });
             document.getElementById('chatInput').value = '';
         }
 

@@ -2,7 +2,7 @@ from flask import request, jsonify, Blueprint
 from app import app, db
 from datetime import datetime
 import jwt
-
+import json
 
 comment_bp = Blueprint('comment', __name__)
 
@@ -14,6 +14,13 @@ class Comment(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     likes = db.Column(db.Integer, default=0)
     dislikes = db.Column(db.Integer, default=0)
+    user_likes = db.Column(db.Text, default='[]') 
+
+    def get_user_likes(self):
+        return json.loads(self.user_likes)
+
+    def set_user_likes(self, user_likes):
+        self.user_likes = json.dumps(user_likes)
 
 with app.app_context():
     db.create_all()
@@ -39,45 +46,17 @@ def add_comment():
         "article_id": new_comment.article_id,
         "username": new_comment.username,
         "text": new_comment.text,
-        "date_created": new_comment.date_created
+        "date_created": new_comment.date_created,
+        "likes": new_comment.likes,
+        "dislikes": new_comment.dislikes,
+        "user_likes": new_comment.get_user_likes()
     }), 201
 
 @app.route('/api/comments/<int:article_id>', methods=['GET'])
 def get_comments(article_id):
     comments = Comment.query.filter_by(article_id=article_id).order_by(Comment.date_created.asc()).all()
-    results = [{'id': comment.id, 'username': comment.username, 'text': comment.text, 'date_created': comment.date_created, 'likes': comment.likes, 'dislikes': comment.dislikes} for comment in comments]
+    results = [{'id': comment.id, 'username': comment.username, 'text': comment.text, 'date_created': comment.date_created, 'likes': comment.likes, 'dislikes': comment.dislikes, 'user_likes': comment.get_user_likes()} for comment in comments]
     return jsonify(results)
-
-# @comment_bp.route('/comments/<int:comment_id>/like', methods=['POST'])
-# def like_comment(comment_id):
-#     comment = Comment.query.get_or_404(comment_id)
-#     comment.likes += 1
-#     db.session.commit()
-#     return jsonify(success=True, likes=comment.likes)
-
-# @comment_bp.route('/comments/<int:comment_id>/dislike', methods=['POST'])
-# def dislike_comment(comment_id):
-#     comment = Comment.query.get_or_404(comment_id)
-#     comment.dislikes += 1
-#     db.session.commit()
-#     return jsonify(success=True, dislikes=comment.dislikes)
-
-# @comment_bp.route('/comments/<int:comment_id>/unlike', methods=['POST'])
-# def unlike_comment(comment_id):
-#     comment = Comment.query.get_or_404(comment_id)
-#     if comment.likes > 0:
-#         comment.likes -= 1
-#     db.session.commit()
-#     return jsonify(success=True, likes=comment.likes)
-
-# @comment_bp.route('/comments/<int:comment_id>/undislike', methods=['POST'])
-# def undislike_comment(comment_id):
-#     comment = Comment.query.get_or_404(comment_id)
-#     if comment.dislikes > 0:
-#         comment.dislikes -= 1
-#     db.session.commit()
-#     return jsonify(success=True, dislikes=comment.dislikes)
-
 
 @app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
 def delete_comment(comment_id):
@@ -85,7 +64,6 @@ def delete_comment(comment_id):
     db.session.delete(comment)
     db.session.commit()
     return jsonify({"message": "Comment deleted successfully", "success": True}), 200
-
 
 @app.route('/api/comments/<int:comment_id>', methods=['PUT'])
 def edit_comment(comment_id):
@@ -95,36 +73,52 @@ def edit_comment(comment_id):
     db.session.commit()
     return jsonify({"message": "Comment updated successfully", "success": True}), 200
 
-
-@comment_bp.route('api/comments/<int:comment_id>/like', methods=['PATCH'])
+@app.route('/api/comments/<int:comment_id>/like', methods=['PATCH'])
 def like_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
-    comment.likes += 1
-    db.session.commit()
-    return jsonify(success=True, likes=comment.likes)
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({"message": "Token is missing", "success": False}), 401
 
-@comment_bp.route('/comments/<int:comment_id>/dislike', methods=['PATCH'])
-def dislike_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    comment.dislikes += 1
-    db.session.commit()
-    return jsonify(success=True, dislikes=comment.dislikes)
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['user']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token has expired", "success": False}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token", "success": False}), 401
 
-@comment_bp.route('/comments/<int:comment_id>/like', methods=['DELETE'])
+    user_likes = comment.get_user_likes()
+    if username not in user_likes:
+        user_likes.append(username)
+        comment.set_user_likes(user_likes)
+        comment.likes += 1
+        db.session.commit()
+
+    return jsonify(success=True, likes=comment.likes, users=comment.get_user_likes())
+
+@app.route('/api/comments/<int:comment_id>/unlike', methods=['DELETE'])
 def unlike_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
-    if comment.likes > 0:
+    token = request.cookies.get('token')
+    if not token:
+        return jsonify({"message": "Token is missing", "success": False}), 401
+
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['user']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Token has expired", "success": False}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token", "success": False}), 401
+
+    user_likes = comment.get_user_likes()
+    if username in user_likes:
+        user_likes.remove(username)
+        comment.set_user_likes(user_likes)
         comment.likes -= 1
-    db.session.commit()
-    return jsonify(success=True, likes=comment.likes)
+        db.session.commit()
 
-@comment_bp.route('/comments/<int:comment_id>/dislike', methods=['DELETE'])
-def undislike_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
-    if comment.dislikes > 0:
-        comment.dislikes -= 1
-    db.session.commit()
-    return jsonify(success=True, dislikes=comment.dislikes)
-
+    return jsonify(success=True, likes=comment.likes, users=comment.get_user_likes())
 
 app.register_blueprint(comment_bp, url_prefix='/api')

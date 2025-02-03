@@ -10,6 +10,12 @@
         .hidden {
             display: none;
         }
+        .liked {
+            color: blue;
+        }
+        .not-liked {
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +82,31 @@
 
             commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span>`;
 
+            if (data.username !== username) {
+                if (username) {
+                    const thumbButton = document.createElement('button');
+                    thumbButton.classList.add('thumb-btn');
+                    thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+                    if (data.user_likes.includes(username)) {
+                        thumbButton.classList.add('liked');
+                    } else {
+                        thumbButton.classList.add('not-liked');
+                    }
+                    thumbButton.onclick = function() {
+                        toggleLikeComment(data.id);
+                    };
+                    commentElement.appendChild(thumbButton);
+                } else {
+                    const thumbIcon = document.createElement('span');
+                    thumbIcon.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+                    commentElement.appendChild(thumbIcon);
+                }
+            } else {
+                const thumbIcon = document.createElement('span');
+                thumbIcon.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+                commentElement.appendChild(thumbIcon);
+            }
+
             if (isAdmin || data.username === username) {
                 const deleteButton = document.createElement('button');
                 deleteButton.classList.add('delete-btn');
@@ -130,7 +161,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    socket.emit('comment', { id: data.id, username, text, room });
+                    socket.emit('comment', { id: data.id, username, text, room});
                     document.getElementById('commentInput').value = '';
                 } else {
                     console.error(data.message);
@@ -153,6 +184,32 @@
                     commentElement.classList.add('message');
                     commentElement.id = `comment-${comment.id}`;
                     commentElement.innerHTML = `<span class="username">${comment.username}:</span><span class="text">${comment.text}</span>`;
+
+                    if (comment.username !== username) {
+                        if (username) {
+                            const thumbButton = document.createElement('button');
+                            thumbButton.classList.add('thumb-btn');
+                            thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${comment.likes}</span>`;
+                            if (comment.user_likes.includes(username)) {
+                                thumbButton.classList.add('liked');
+                            } else {
+                                thumbButton.classList.add('not-liked');
+                            }
+                            thumbButton.onclick = function() {
+                                toggleLikeComment(comment.id);
+                            };
+                            commentElement.appendChild(thumbButton);
+                        } else {
+                            const thumbIcon = document.createElement('span');
+                            thumbIcon.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${comment.likes}</span>`;
+                            commentElement.appendChild(thumbIcon);
+                        }
+                    } else {
+                        const thumbIcon = document.createElement('span');
+                        thumbIcon.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${comment.likes}</span>`;
+                        commentElement.appendChild(thumbIcon);
+                    }
+
                     if (isAdmin || comment.username === username) {
                         const deleteButton = document.createElement('button');
                         deleteButton.classList.add('delete-btn');
@@ -218,6 +275,60 @@
                 .catch(error => console.error('Error:', error));
             }
         }
+
+        function toggleLikeComment(commentId) {
+            const thumbButton = document.querySelector(`#comment-${commentId} .thumb-btn`);
+            if (thumbButton.classList.contains('liked')) {
+                thumbButton.classList.remove('liked');
+                thumbButton.classList.add('not-liked');
+                fetch (`/api/comments/${commentId}/unlike`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(data.users)
+                        console.error("odlikowalem komentarz ", data.likes)
+                        socket.emit('unlike_comment', { id: commentId, likes: data.likes, room });
+                        const thumbButton = document.querySelector(`#comment-${commentId} .thumb-btn`);
+                        thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+                    } else {
+                        console.error(data.message);
+                    }
+                })
+            } else {
+                thumbButton.classList.remove('not-liked');
+                thumbButton.classList.add('liked');
+                fetch(`/api/comments/${commentId}/like`, {
+                        method: 'PATCH',
+                        credentials: 'include'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log(data.users)
+                            socket.emit('like_comment', { id: commentId,likes: data.likes, room });
+                            const thumbButton = document.querySelector(`#comment-${commentId} .thumb-btn`);
+                            thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+                        } else {
+                            console.error(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+        
+            }
+        }
+
+        socket.on('like_comment', function(data) {
+            const thumbButton = document.querySelector(`#comment-${data.id} .thumb-btn`);
+            thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+        });
+
+        socket.on('unlike_comment', function(data) {
+            const thumbButton = document.querySelector(`#comment-${data.id} .thumb-btn`);
+            thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/api/user', {
