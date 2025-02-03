@@ -20,6 +20,6 @@ with app.app_context():
 @app.route('/api/messages/<room>', methods=['GET'])
 def get_messages(room):
     messages = Message.query.filter_by(room=room).order_by(Message.timestamp).all()
-    return jsonify([{'username': msg.username, 'text': msg.text, 'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')} for msg in messages])
+    return jsonify([{'id': msg.id, 'username': msg.username, 'text': msg.text, 'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')} for msg in messages])
 
-#edit message i delete message (delete dostepne dla admina wszystko a dla uzytkownika tylko ich wiadomosci)
+

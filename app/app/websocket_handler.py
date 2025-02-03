@@ -45,5 +45,36 @@ def handle_message(data):
     db.session.add(new_message)
     db.session.commit()
 
-    emit('message', {'username': username, 'text': text}, room=room)
+    emit('message', {
+        'username': username, 
+        'text': text, 
+        'id': new_message.id 
+    }, room=room)
 
+
+
+@socketio.on('delete_message')
+def handle_delete_message(data):
+    room = data['room']
+    message_id = data['message_id']
+
+    message = Message.query.filter_by(id=message_id).first()
+    if message:
+        db.session.delete(message) 
+        db.session.commit()
+
+    
+        emit('delete_message', {'message_id': message_id}, room=room)
+
+@socketio.on('edit_message')
+def handle_edit_messade(data):
+    room = data['room']
+    message_id = data['message_id']
+    new_text = data['text']
+
+    message = Message.query.filter_by(id=message_id).first()
+    if message:
+        message.text = new_text
+        db.session.commit()
+
+        emit('edit_message', {'message_id': message_id, 'text': new_text}, room=room)

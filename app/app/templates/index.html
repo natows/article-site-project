@@ -83,7 +83,11 @@
         </div>
         <div id="chatDiv">
             <h2>Chat with other users!</h2>
-            <button onclick="redirectToChatRoom('probny chat')">probny chat</button>
+            <div id="chats">
+                <button onclick="redirectToChatRoom('probny chat')">probny chat</button>
+                <button onclick="redirectToChatRoom('chat2')">chat 2</button>
+                <button onclick="createRoom()">Create a new chat!</button>
+            </div>
         </div>
         <div id="messages"></div>
         <div id="articles"></div>
@@ -289,6 +293,47 @@
 
         function redirectToChatRoom(roomName) {
             window.location.href = `/room/${roomName}`;
+        }
+        function loadRooms(){
+            fetch('/api/rooms', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chats = document.getElementById('chats');
+                chats.innerHTML = '';
+                data.forEach(room => {
+                    const newChat = document.createElement('button');
+                    newChat.innerText = room;
+                    newChat.onclick = function() {
+                        redirectToChatRoom(room);
+                    }
+                    chats.appendChild(newChat);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        function createRoom() {
+            const roomName = prompt('Enter the name of the room:');
+            if (roomName) {
+                fetch('/api/create_room', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: roomName })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadRooms();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
         }
 
         function logout() {
