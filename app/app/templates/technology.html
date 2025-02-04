@@ -8,7 +8,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #1a1a2e, #4a90e2);
+
             margin: 0;
             padding: 0;
             display: flex;
@@ -17,16 +18,24 @@
         }
         header {
             width: 100%;
-            background-color: #007BFF;
-            color: white;
-            padding: 15px 0;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
             text-align: center;
+        }
+        header h1 {
+            margin: 0;
         }
         main {
             width: 100%;
             max-width: 1200px;
             padding: 20px;
             box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         .panel {
             display: flex;
@@ -73,14 +82,20 @@
         }
         #articles {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
         }
         article {
-            background: white;
+            background: rgba(255, 255, 255, 0.8);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         article h2 {
             margin-top: 0;
@@ -89,15 +104,23 @@
             margin: 10px 0;
         }
         article button {
-            background-color: #007BFF;
+            background-color: #4a90e2;
             color: white;
             border: none;
             padding: 10px;
             border-radius: 5px;
             cursor: pointer;
+            align-self: flex-end;
         }
         article button:hover {
             background-color: #0056b3;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        a:hover {
+            text-decoration: underline;
         }
         #chatContainer {
             display: none;

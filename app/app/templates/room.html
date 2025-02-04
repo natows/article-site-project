@@ -10,6 +10,25 @@
         .hidden {
             display: none;
         }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chatContainer {
+            width: 100%;
+            width:800px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
         #chat {
             border: 2px solid #ccc;
             padding: 10px;
@@ -70,12 +89,15 @@
     <header>
         <h1 id="roomName"></h1>
         <button onclick="subscribeChat()">Subscribe the chat</button>
+        <button onclick="unsubscribeChat()">Unsubscribe the chat</button>
         <div id="messageDiv"></div>
     </header>
     <main>
-        <div id="chat"></div>
-        <input id="chatInput" placeholder="Type a message"/>
-        <button onclick="sendMessage()">Send</button>
+        <div id="chatContainer">
+            <div id="chat"></div>
+            <input id="chatInput" placeholder="Type a message"/>
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </main>
 
     <script>
@@ -83,6 +105,7 @@
         const roomName = "{{ room_name }}"; 
         document.getElementById('roomName').textContent = `Chat: ${roomName}`;
         let username = '';
+        let isAdmin = false;
         const eventSource = new EventSource(`/sse/subscribe/${roomName}`);
 
         eventSource.onmessage = function(event) {
@@ -92,7 +115,6 @@
             setTimeout(() => {
                 messageDiv.innerHTML = "";
             }, 3000);
-            
         };
 
         socket.on('connect', function() {
@@ -101,7 +123,6 @@
                 return;
             }
             console.log('Connected to WebSocket');
-            // socket.emit('join', { username, room: roomName });
         });
 
         socket.on('disconnect', function() {
@@ -119,8 +140,8 @@
                 msgElement.classList.add('system');
                 msgElement.innerHTML = `<span class="text">${data.text}</span>`;
             } else {
-                if (data.username === username) {
-                    msgElement.classList.add('self');
+                if (data.username === username || isAdmin) {
+                    msgElement.classList.add(data.username === username ? 'self' : 'others');
                     msgElement.innerHTML = `<button class="delete-btn"><i class="fa-solid fa-trash-can"></i></button><button class="edit-btn"><i class="fa-solid fa-pen"></i></button><span class="username">${data.username}:</span> <span class="text">${data.text}</span>`;
                 } else {
                     msgElement.classList.add('others');
@@ -156,7 +177,6 @@
             }
         });
 
-
         function sendMessage() {
             const text = document.getElementById('chatInput').value;
             if (!username) {
@@ -180,6 +200,7 @@
             .then(data => {
                 if (data.username) {
                     username = data.username;
+                    isAdmin = data.is_admin;
                     console.log('Username set to:', username);
                     socket.emit('join', { username, room: roomName });
                     loadMessages(); 
@@ -198,8 +219,8 @@
                     msgElement.classList.add('message');
                     msgElement.setAttribute('data-message-id', data.id);
                     msgElement.setAttribute('id', `message-${data.id}`); 
-                    if (data.username === username) {
-                        msgElement.classList.add('self');
+                    if (data.username === username || isAdmin) {
+                        msgElement.classList.add(data.username === username ? 'self' : 'others');
                         msgElement.innerHTML = `<button class="delete-btn"><i class="fa-solid fa-trash-can"></i></button><button class="edit-btn"><i class="fa-solid fa-pen"></i></button> <span class="username">${data.username}:</span> <span class="text">${data.text}</span>`;
                     } else {
                         msgElement.classList.add('others');
@@ -232,7 +253,6 @@
             }
         });
 
-
         function subscribeChat() {
             fetch(`/sse/subscribe/${roomName}`, {
                 method: 'POST', 
@@ -249,6 +269,21 @@
             .catch(error => console.error('Error subscribing:', error));
         }
 
+        function unsubscribeChat() {
+            fetch(`/sse/unsubscribe/${roomName}`, {
+                method: 'POST', 
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user: username }) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => console.error('Error unsubscribing:', error));
+        }
     </script>
 </body>
 </html>

@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -15,45 +15,53 @@
             height: 100vh;
             margin: 0;
         }
-        main {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .container {
             width: 100%;
             max-width: 500px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
+            margin-bottom: 20px;
+            color: #333;
         }
         label {
             font-weight: bold;
+            margin-top: 10px;
         }
         input, textarea, select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin: 5px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
+            box-sizing: border-box;
         }
         button {
             width: 100%;
             padding: 10px;
-            background-color: #007BFF;
-            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 10px;
         }
-        button:hover {
-            background-color: #0056b3;
+        button[type="submit"] {
+            background-color: #b4ebeb; /* pudrowo niebieski */
+            color: black;
         }
-        #deleteArticleButton {
-            background-color: #dc3545;
+        button[type="submit"]:hover {
+            background-color: #add8e6; /* jaśniejszy niebieski */
         }
-        #deleteArticleButton:hover {
-            background-color: #c82333;
+        .delete-btn {
+            background-color: #ff6b6b; /* jasny czerwony */
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #ff4c4c; /* ciemniejszy czerwony */
         }
         #responseMessage {
             margin-top: 15px;
@@ -64,29 +72,31 @@
     </style>
 </head>
 <body>
-    <header>
+    <div class="container">
         <h1>Modify Article</h1>
-    </header>
-    <main>
         <form id="modifyArticleForm">
             <label for="title">Title:</label>
-            <input type="text" id="title" name="title" required><br><br>
+            <input type="text" id="title" name="title" required>
+            
             <label for="content">Content:</label>
-            <textarea id="content" name="content" rows="10" cols="50" required></textarea><br><br>
+            <textarea id="content" name="content" rows="5" required></textarea>
+            
             <label for="category">Category:</label>
             <select id="category" name="category" required>
                 <option value="sport">Sport</option>
                 <option value="technology">Technology</option>
                 <option value="health">Health</option>
                 <option value="entertainment">Entertainment</option>
-            </select><br><br>
+            </select>
+            
             <label for="author">Author:</label>
-            <input type="text" id="author" name="author" required><br><br>
+            <input type="text" id="author" name="author" required>
+            
             <button type="submit">Save Changes</button>
-            <button type="button" id="deleteArticleButton">Delete Article</button>
+            <button type="button" class="delete-btn" id="deleteArticleButton">Delete Article</button>
         </form>
         <div id="responseMessage"></div>
-    </main>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -121,6 +131,9 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('responseMessage').innerText = data.message;
+                    setTimeout(() => {
+                        document.getElementById('responseMessage').innerText = '';
+                    }, 3000);
                 })
                 .catch(error => console.error('Error:', error));
             });
@@ -139,6 +152,9 @@
                             window.location.href = '/';
                         } else {
                             document.getElementById('responseMessage').innerText = data.message;
+                            setTimeout(() => {
+                                document.getElementById('responseMessage').innerText = '';
+                            }, 3000);
                         }
                     })
                     .catch(error => console.error('Error:', error));

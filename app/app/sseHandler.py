@@ -60,6 +60,28 @@ def subscribe(room_name):
     return jsonify({"message": f"Subscribed {username} to {room_name}", "success": True}), 200
 
 
+@sse.route('/sse/unsubscribe/<room_name>', methods=['POST'])
+def unsubscribe(room_name):
+    data = request.get_json()
+    username = data.get('user')
+    
+    if not username:
+        return jsonify({"message": "Username is required", "success": False}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if room_name in user.subscribed_rooms:
+            user.subscribed_rooms.remove(room_name)
+            db.session.commit()
+
+    if room_name in subscribers:
+        for q in subscribers[room_name]:
+            if q.queue:
+                q.queue.clear()
+
+    return jsonify({"message": f"Unsubscribed {username} from {room_name}", "success": True}), 200
+
+
 @sse.route('/sse/subscribe/<room_name>', methods=['GET'])
 def get_messages(room_name):
     return event_stream(room_name)

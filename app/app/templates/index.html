@@ -8,9 +8,39 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            margin: 20px;
+        }
+
+        header {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8)e;
+            color: black;
+            
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
         .hidden {
             display: none;
         }
+
         .modal {
             display: none;
             position: fixed;
@@ -20,10 +50,10 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0, 0, 0, 0.4);
             padding-top: 60px;
         }
+
         .modal-content {
             background-color: #fefefe;
             margin: 5% auto;
@@ -31,44 +61,175 @@
             border: 1px solid #888;
             width: 80%;
         }
+
         .close {
             color: #aaa;
             float: right;
             font-size: 28px;
             font-weight: bold;
         }
+
         .close:hover,
         .close:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
         }
-        .delete-btn .update-btn{
+
+        .delete-btn, .update-btn {
             background: none;
             border: none;
-            color: red;
             cursor: pointer;
             font-size: 16px;
             margin-right: 10px;
         }
 
+        .delete-btn {
+            color: red;
+        }
+
         .delete-btn:hover {
             color: darkred;
         }
+
         .update-btn {
             color: blue;
         }
+
         .update-btn:hover {
             color: darkblue;
+        }
+
+        #articles {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .article {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .article h2 {
+            margin-top: 0;
+        }
+
+        .article p {
+            margin: 10px 0;
+        }
+
+        .article button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        .article button:hover {
+            background-color: #0056b3;
+        }
+
+        .latest {
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        nav button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        nav button:first-child {
+            margin-left: 0;
+        }
+
+        nav button:last-child {
+            margin-right: 0;
+        }
+
+        nav button:hover {
+            background-color: #0056b3;
+        }
+
+        .panel {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .panel div {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .panel div:last-child {
+            margin-right: 0;
+        }
+
+        #chatDiv {
+            display: none;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        #messages {
+            margin-top: 20px;
+        }
+
+        .message {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #userPanel{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Main Page</h1>
-    </header>
-    <div id="welcomeMessage"></div>
-        <div>
+    <div class="container">
+        <header>
+            <h1>Main Page</h1>
+        </header>
+        <div id="userPanel">
+            <div id="welcomeMessage"></div>
             <button id="loginButton" onclick="window.location.href='/login'">Log in</button>
             <button id="signinButton" onclick="window.location.href='/signin'">Sign in</button>
             <button id="logoutButton" onclick="logout()" class="hidden">Log out</button>
@@ -83,36 +244,38 @@
         <button onclick="window.location.href='/entertainment'">Entertainment</button>
     </nav>
     <main>
-        <div>
-            <input id="searchInput" placeholder="Browse articles"/>
-        </div>
-        <div>
-            <label for="filterDate">Date:</label>
-            <input type="date" id="filterDate" />
-            <label for="filterAuthor">Author:</label>
-            <input type="text" id="filterAuthor" placeholder="Author" />
-            <label for="filterCategory">Category:</label>
-            <select id="filterCategory">
-                <option value="">All</option>
-                <option value="sport">Sport</option>
-                <option value="technology">Technology</option>
-                <option value="health">Health</option>
-                <option value="entertainment">Entertainment</option>
-            </select>
-            <button onclick="searchArticles()">Search</button>
+        <div class="panel">
+            <div>
+                <input id="searchInput" placeholder="Browse articles"/>
+                <label for="filterDate">Date:</label>
+                <input type="date" id="filterDate" />
+                <label for="filterAuthor">Author:</label>
+                <input type="text" id="filterAuthor" placeholder="Author" />
+                <label for="filterCategory">Category:</label>
+                <select id="filterCategory">
+                    <option value="">All</option>
+                    <option value="sport">Sport</option>
+                    <option value="technology">Technology</option>
+                    <option value="health">Health</option>
+                    <option value="entertainment">Entertainment</option>
+                </select>
+                <button onclick="searchArticles()">Search</button>
+            </div>
         </div>
         
-        <div id="chatDiv" class="hidden">
+        <div id="chatDiv">
             <h2>Chat with other users!</h2>
             <div id="chats"></div>
             <button id="createRoomButton" onclick="createRoom()">Create a new chat!</button>
             <input id="searchRoomInput" placeholder="Search rooms" oninput="searchRooms()"/>
         </div>
         <div id="messages"></div>
-
-        <div id="articles"></div>
-
     </main>
+    </div>
+    <div id="articleDiv" class="container">
+        <div class="latest">Latest articles</div>
+        <div id="articles"></div>
+    </div>
 
     <div id="usersModal" class="modal">
         <div class="modal-content">
@@ -216,15 +379,22 @@
                     document.getElementById('accountButton').classList.remove('hidden');
                     document.getElementById('createArticleButton').classList.remove('hidden');
                     document.getElementById('chatDiv').classList.remove('hidden');
-                    subscribeToChats(data.subscribed_rooms);
+                    waitForMqttConnection(data.subscribed_rooms);
                     fetchRooms();
-                    subscribeToUserTopics();
-                    
                 }
             })
             .catch(error => console.error('Error:', error));
             fetchArticles(); 
         });
+
+        function waitForMqttConnection(rooms) {
+            const interval = setInterval(() => {
+                if (client.isConnected()) {
+                    subscribeToChats(rooms);
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
 
         function subscribeToUserTopics() {
             fetch('/api/subscriptions', {
@@ -252,12 +422,10 @@
                 .then(data => {
                     const articlesDiv = document.getElementById('articles');
                     articlesDiv.innerHTML = '';
-                    const latest = document.createElement('h2');
-                    latest.innerHTML = "Latest articles"
-                    articlesDiv.appendChild(latest);
-                    const latestArticles = data.slice(0, 5);
+                    const latestArticles = data.slice(0, 9);
                     latestArticles.forEach(article => {
                         const articleElement = document.createElement('div');
+                        articleElement.classList.add('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `
                             <h2><a href="/article/${article.id}">${article.title}</a></h2>
@@ -302,8 +470,12 @@
                     if (!filterDate) {
                         data.sort((a, b) => new Date(b.date_created) - new Date(a.date_created));
                     }
+                    if (data.length === 0) {
+                        articlesDiv.innerHTML = '<p>No articles found</p>';
+                    }
                     data.forEach(article => {
                         const articleElement = document.createElement('div');
+                        articleElement.classList.add('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `
                             <h2><a href="/article/${article.id}">${article.title}</a></h2>

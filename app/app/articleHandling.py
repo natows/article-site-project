@@ -90,6 +90,16 @@ def get_article_by_id(article_id):
     else:
         return jsonify({"message": "Article not found"}), 404
     
+
+@app.route('/api/articles/<username>', methods=['GET'])
+def get_articles_by_user(username):
+    articles = Article.query.filter_by(author=username).all()
+    results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'author': article.author, 'date_created': article.date_created} for article in articles]
+    return jsonify(results)
+
+#zrob tu do debugu fetch autors plis
+
+
 @app.route('/api/articles/<int:article_id>', methods=['PUT'])
 def update_article(article_id):
     data = request.get_json()

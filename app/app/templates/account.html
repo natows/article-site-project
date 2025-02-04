@@ -4,24 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button[type="submit"] {
+            background-color: #b4ebeb; /* pudrowo niebieski */
+            color: black;
+        }
+        button[type="submit"]:hover {
+            background-color: #add8e6; /* jaśniejszy niebieski */
+        }
+        .delete-btn {
+            background-color: #ff6b6b; /* jasny czerwony */
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #ff4c4c; /* ciemniejszy czerwony */
+        }
+        .logout-btn {
+            background-color: #d3d3d3; /* jasny szary */
+            color: black;
+        }
+        .logout-btn:hover {
+            background-color: #c0c0c0; /* ciemniejszy szary */
+        }
+        #responseMessage {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: green;
+        }
+        #articlesList {
+            margin-top: 20px;
+        }
+        .article-item {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .article-item a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        .article-item a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
 </head>
 <body>
-    <h1>User Account</h1>
-    <div id="welcomeMessage"></div>
+    <div class="container">
+        <h1>User Account</h1>
+        <div id="welcomeMessage"></div>
 
-    <form id="updateForm">
-        <h2>Update Account</h2>
-        <label for="newUsername">New Username:</label>
-        <input type="text" id="newUsername" name="newUsername"><br><br>
-        <label for="newPassword">New Password:</label>
-        <input type="password" id="newPassword" name="newPassword"><br><br>
-        <button type="submit">Update</button>
-    </form>
+        <form id="updateForm">
+            <h2>Update Account</h2>
+            <label for="newUsername">New Username:</label>
+            <input type="text" id="newUsername" name="newUsername"><br><br>
+            <label for="newPassword">New Password:</label>
+            <input type="password" id="newPassword" name="newPassword"><br><br>
+            <button type="submit">Update</button>
+        </form>
 
-    <button id="deleteButton" onclick="deleteAccount()">Delete Account</button>
-    <button id="logoutButton" onclick="logout()">Log Out</button>
+        <button id="deleteButton" class="delete-btn" onclick="deleteAccount()">Delete Account</button>
+        <button id="logoutButton" class="logout-btn" onclick="logout()">Log Out</button>
 
-    <div id="responseMessage"></div>
+        <div id="responseMessage"></div>
+
+        <div id="articlesList">
+            <h2>Your Articles</h2>
+            <div id="userArticles"></div>
+        </div>
+    </div>
 
     <script>
         let userId;
@@ -35,7 +132,15 @@
                 if (data.username) {
                     userId = data.id;
                     console.log(`id usera ${userId}`);
+                    console.log(data.username)
                     document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
+                    document.getElementById('welcomeMessage').innerText = `Welcome, ${data.username}!`;
+                    document.getElementById('welcomeMessage').style.fontWeight = 'bold';
+                    document.getElementById('welcomeMessage').style.fontSize = '17px';
+                    document.getElementById('welcomeMessage').style.color = '#333';
+                    document.getElementById('welcomeMessage').style.textAlign = 'center';
+                    document.getElementById('welcomeMessage').style.marginBottom = '20px';
+                    loadUserArticles(data.username);
                 }
             })
             .catch(error => console.error('Error:', error));
@@ -85,6 +190,26 @@
                 window.location.href = '/';
             })
             .catch(error => console.error('Error:', error));
+        }
+
+        function loadUserArticles(username) {
+            fetch(`/api/articles/${username}`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('data', data);
+                const userArticlesDiv = document.getElementById('userArticles');
+                userArticlesDiv.innerHTML = '';
+                data.forEach(article => {
+                    const articleElement = document.createElement('div');
+                    articleElement.classList.add('article-item');
+                    articleElement.innerHTML = `<a href="/article/${article.id}">${article.title}</a>`;
+                    userArticlesDiv.appendChild(articleElement);
+                });
+            })
+            .catch(error => console.error('Error fetching user articles:', error));
         }
     </script>
 </body>
