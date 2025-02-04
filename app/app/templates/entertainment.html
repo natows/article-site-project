@@ -6,13 +6,47 @@
     <title>Entertainment Section</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+        }
+        main {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .panel {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .panel div {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .panel div:last-child {
+            margin-right: 0;
+        }
         .hidden {
             display: none;
         }
         #chat {
             border: 2px solid #ccc;
             padding: 10px;
-            width: 200px;
+            width: 100%;
             height: 150px;
             overflow-y: auto;
             box-sizing: border-box;
@@ -37,6 +71,38 @@
             background: #e1e1e1;
             padding: 8px;
         }
+        #articles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        article {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        article h2 {
+            margin-top: 0;
+        }
+        article p {
+            margin: 10px 0;
+        }
+        article button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        article button:hover {
+            background-color: #0056b3;
+        }
+        #chatContainer {
+            display: none;
+            grid-column: span 1;
+        }
     </style>
 </head>
 <body>
@@ -44,22 +110,24 @@
         <h1>Entertainment Section</h1>
     </header>
     <main>
-        <div>
+        <div class="panel">
             <div>
                 <input id="searchInput" placeholder="Search articles"/>
                 <button onclick="searchArticles()">Search</button>
                 <button id="subscribeButton" onclick="toggleSubscription('entertainment')" class="hidden"></button>
             </div>
-            <button id="openChat" onclick="openChat()">Open chat</button>
-            <div id="chatSection" class="hidden">
-                <h2>Live Chat</h2>
-                <div id="chat"></div>
-                <input id="chatInput" placeholder="Type a message"/>
-                <button onclick="sendMessage()">Send</button>
+            <div>
+                <button id="openChat" onclick="openChat()">Open chat</button>
+                <button class="hidden" id="closeChat" onclick="openChat()">Close chat</button>
             </div>
-            <button class="hidden" id="closeChat" onclick="openChat()">Close chat</button>
         </div>
         <div id="articles"></div>
+        <div id="chatContainer">
+            <h2>Live Chat</h2>
+            <div id="chat"></div>
+            <input id="chatInput" placeholder="Type a message"/>
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </main>
 
     <script>
@@ -68,6 +136,7 @@
         const notificationTopic = 'projektProtokoly/notifications/entertainment';
         let username = 'Anonymous User';
         let user = null;
+        let isAdmin = false;
         const channel = 'entertainment';
 
         function scrollToBottom() {
@@ -114,6 +183,7 @@
                 if (data.username) {
                     user = data;
                     username = data.username;
+                    isAdmin = data.is_admin;
                     console.log('Username set to:', username);
                     document.getElementById('openChat').classList.remove('hidden');
                     document.getElementById('subscribeButton').classList.remove('hidden');
@@ -128,9 +198,22 @@
         });
 
         function openChat(){
-            document.getElementById('chatSection').classList.toggle('hidden');
-            document.getElementById('openChat').classList.toggle('hidden');
-            document.getElementById('closeChat').classList.toggle('hidden');
+            const chatContainer = document.getElementById('chatContainer');
+            const openChatButton = document.getElementById('openChat');
+            const closeChatButton = document.getElementById('closeChat');
+            const articles = document.getElementById('articles');
+
+            if (chatContainer.style.display === 'none') {
+                chatContainer.style.display = 'block';
+                openChatButton.classList.add('hidden');
+                closeChatButton.classList.remove('hidden');
+                articles.insertBefore(chatContainer, articles.children[2]);
+            } else {
+                chatContainer.style.display = 'none';
+                openChatButton.classList.remove('hidden');
+                closeChatButton.classList.add('hidden');
+                articles.appendChild(chatContainer);
+            }
         }
 
         function fetchArticles(query = '') {
@@ -139,10 +222,14 @@
                 .then(data => {
                     const articlesDiv = document.getElementById('articles');
                     articlesDiv.innerHTML = '';
+                    data.sort((a, b) => new Date(b.date_created) - new Date(a.date_created)); 
                     data.forEach(article => {
                         const articleElement = document.createElement('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `<h2><a href="/article/${article.id}">${article.title}</a></h2><p>${truncatedContent}</p><p class="date">Published on: ${new Date(article.date_created).toLocaleDateString()}</p><p>Author: ${article.author}</p>`;
+                        if (isAdmin || article.author === username) {
+                            articleElement.innerHTML += `<button onclick="window.location.href='/modify/${article.id}'">Modify</button>`;
+                        }
                         articlesDiv.appendChild(articleElement);
                     });
                 })

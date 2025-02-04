@@ -7,6 +7,118 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        header {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .article-details {
+            margin-bottom: 20px;
+        }
+        .article-details p {
+            margin: 10px 0;
+        }
+        .date {
+            color: gray;
+            font-size: 0.9em;
+        }
+        #commentSection {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #commentSection h2 {
+            margin-bottom: 10px;
+        }
+        #comments {
+            margin-bottom: 20px;
+        }
+        .message {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .message .username {
+            font-weight: bold;
+        }
+        .message .text {
+            margin-left: 10px;
+        }
+        .thumb-btn, .delete-btn, .edit-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .thumb-btn.liked {
+            color: blue;
+        }
+        .thumb-btn.not-liked {
+            color: black;
+        }
+        #commentInputSection {
+            display: flex;
+            align-items: center;
+        }
+        #commentInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        #commentInputSection button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #commentInputSection button:hover {
+            background-color: #0056b3;
+        }
+        #loginPrompt {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #loginPrompt a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        #loginPrompt a:hover {
+            text-decoration: underline;
+        }
         .hidden {
             display: none;
         }
@@ -22,26 +134,26 @@
     <header>
         <h1 id="articleTitle"></h1>
     </header>
-    <main>
-        <div>
+    <main class="container">
+        <div class="article-details">
             <p id="articleAuthor"></p>
             <p id="articleContent"></p>
             <p class="date" id="articleDate"></p>
         </div>
-        <div id="commentSection">
-            <h2>Comments</h2>
-            <div id="comments"></div>
-            <div id="commentInputSection">
-                <input id="commentInput" placeholder="Type a comment"/>
-                <button onclick="sendComment()">Send</button>
-            </div>
-            <p id="loginPrompt" class="hidden"><a href="/login">Log in to write comments</a></p>
-        </div>
     </main>
+    <div id="commentSection" class="container">
+        <h2>Comments</h2>
+        <div id="comments"></div>
+        <div id="commentInputSection" class="hidden">
+            <input id="commentInput" placeholder="Type a comment"/>
+            <button onclick="sendComment()">Send</button>
+        </div>
+        <p id="loginPrompt" class="hidden"><a href="/login">Log in to write comments</a></p>
+    </div>
 
     <script>
         const socket = io();
-        let username = '';
+        let username = 'Anonymous User';
         let isAdmin = false;
         const articleId = window.location.pathname.split('/').pop(); 
         fetch(`/api/articles/${articleId}`)
@@ -83,7 +195,7 @@
             commentElement.innerHTML = `<span class="username">${data.username}:</span><span class="text">${data.text}</span>`;
 
             if (data.username !== username) {
-                if (username) {
+                if (username && username !== "Anonymous User") {
                     const thumbButton = document.createElement('button');
                     thumbButton.classList.add('thumb-btn');
                     thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
@@ -145,7 +257,7 @@
 
         function sendComment() {
             const text = document.getElementById('commentInput').value;
-            if (!username) {
+            if (!username || username === "Anonymous User") {
                 console.error('Username is not set');
                 return;
             }
@@ -161,7 +273,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    socket.emit('comment', { id: data.id, username, text, room});
+                    socket.emit('comment', { id: data.id, username, text, user_likes: data.user_likes, room});
                     document.getElementById('commentInput').value = '';
                 } else {
                     console.error(data.message);
@@ -186,7 +298,7 @@
                     commentElement.innerHTML = `<span class="username">${comment.username}:</span><span class="text">${comment.text}</span>`;
 
                     if (comment.username !== username) {
-                        if (username) {
+                        if (username && username !== "Anonymous User") {
                             const thumbButton = document.createElement('button');
                             thumbButton.classList.add('thumb-btn');
                             thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${comment.likes}</span>`;
@@ -289,9 +401,9 @@
                 .then(data => {
                     if (data.success) {
                         console.log(data.users)
-                        console.error("odlikowalem komentarz ", data.likes)
-                        socket.emit('unlike_comment', { id: commentId, likes: data.likes, room });
                         const thumbButton = document.querySelector(`#comment-${commentId} .thumb-btn`);
+                        socket.emit('unlike_comment', { id: commentId, likes: data.likes, room });
+
                         thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
                     } else {
                         console.error(data.message);
@@ -308,8 +420,8 @@
                     .then(data => {
                         if (data.success) {
                             console.log(data.users)
-                            socket.emit('like_comment', { id: commentId,likes: data.likes, room });
                             const thumbButton = document.querySelector(`#comment-${commentId} .thumb-btn`);
+                            socket.emit('like_comment', { id: commentId,likes: data.likes, room });
                             thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
                         } else {
                             console.error(data.message);
@@ -321,14 +433,27 @@
         }
 
         socket.on('like_comment', function(data) {
+            console.log(`Liking comment ${data.id}, current likes: ${data.likes}`);
             const thumbButton = document.querySelector(`#comment-${data.id} .thumb-btn`);
-            thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+            if (thumbButton) {
+                thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
+            } else {
+                loadComments(); 
+            }
         });
 
-        socket.on('unlike_comment', function(data) {
-            const thumbButton = document.querySelector(`#comment-${data.id} .thumb-btn`);
+
+
+    socket.on('unlike_comment', function(data) {
+        console.log(`Unliking comment ${data.id}, current likes: ${data.likes}`);
+        const thumbButton = document.querySelector(`#comment-${data.id} .thumb-btn`);
+        if (thumbButton) {
             thumbButton.innerHTML = `<i class="fa fa-thumbs-up"></i> <span class="like-count">${data.likes}</span>`;
-        });
+        } else {
+            loadComments(); 
+        }
+    });
+
 
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/api/user', {
@@ -337,7 +462,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.username) {
+                if (data.username && data.username !== "Anonymous User") {
                     username = data.username;
                     isAdmin = data.is_admin;
                     console.log('Username set to:', username);
@@ -346,6 +471,7 @@
                     document.getElementById('commentInputSection').classList.remove('hidden');
                     document.getElementById('loginPrompt').classList.add('hidden');
                 } else {
+                    console.log('Set username to', username)
                     document.getElementById('commentInputSection').classList.add('hidden');
                     document.getElementById('loginPrompt').classList.remove('hidden');
                 }

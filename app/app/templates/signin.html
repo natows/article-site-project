@@ -4,18 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #add8e6, #ffcccb);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #add8e6;
+            color: gray;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #87ceeb;
+        }
+        .back-btn {
+            background-color: #ffcccb;
+        }
+        .back-btn:hover {
+            background-color: #ffb6c1;
+        }
+        #responseMessage {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
 </head>
 <body>
-    <h1>Sign in</h1>
-    <form id="registerForm">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-        <button type="submit">Sign in</button>
-    </form>
-
-    <div id="responseMessage"></div>
+    <div class="container">
+        <h1>Sign in</h1>
+        <form id="registerForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <button type="submit">Sign in</button>
+            <button type="button" class="back-btn" onclick="window.location.href='/login'">Log in</button>
+        </form>
+        <div id="responseMessage"></div>
+    </div>
 
     <script>
         document.getElementById('registerForm').addEventListener('submit', function(event) {
@@ -23,7 +86,7 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            fetch('/api/signin', {
+            fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -32,9 +95,10 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('responseMessage').innerText = data.message;
                 if (data.success) {
                     window.location.href = '/';
+                } else {
+                    document.getElementById('responseMessage').innerText = data.message;
                 }
             })
             .catch(error => console.error('Error:', error));

@@ -299,6 +299,9 @@
                 .then(data => {
                     const articlesDiv = document.getElementById('articles');
                     articlesDiv.innerHTML = '';
+                    if (!filterDate) {
+                        data.sort((a, b) => new Date(b.date_created) - new Date(a.date_created));
+                    }
                     data.forEach(article => {
                         const articleElement = document.createElement('div');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
@@ -308,7 +311,7 @@
                             <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
                             <p>Author: ${article.author}</p>
                         `;
-                        if (isAdmin) {
+                        if (isAdmin || article.author === username) {
                             articleElement.innerHTML += `<button onclick="window.location.href='/modify/${article.id}'">Modify</button>`;
                         }
                         articlesDiv.appendChild(articleElement);
