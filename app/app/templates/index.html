@@ -29,9 +29,8 @@
 
         header {
             width: 100%;
-            background: rgba(255, 255, 255, 0.8)e;
+            background: rgba(255, 255, 255, 0.8);
             color: black;
-            
             text-align: center;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -156,7 +155,7 @@
         }
 
         nav button {
-            background-color: #007BFF;
+            background-color: #87ceeb;
             color: white;
             border: none;
             padding: 10px;
@@ -175,14 +174,47 @@
         }
 
         nav button:hover {
-            background-color: #0056b3;
+            background-color: #00bfff;
+        }
+        
+        #chatDiv {
+            width: 95%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 10px
+        }
+
+        #chatDiv button, #chatDiv input {
+            background-color: #87ceeb;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+
+        #chatDiv button:hover, #chatDiv input:hover {
+            background-color: #00bfff;
         }
 
         .panel {
+            width: 95%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            width: 100%;
+            align-items: center;
+            justify-content: venter;
         }
 
         .panel div {
@@ -193,15 +225,16 @@
         .panel div:last-child {
             margin-right: 0;
         }
-
-        #chatDiv {
-            display: none;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin: 20px 0;
+        .panel button{
+            background-color: #87ceeb;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .panel button:hover {
+            background-color: #00bfff;
         }
 
         #messages {
@@ -215,11 +248,25 @@
             margin-bottom: 10px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        #userPanel{
+
+        #userPanel {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        #userPanel button {
+            background-color: #ffcccb;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #userPanel button:hover {
+            background-color: #ff9999;
         }
     </style>
 </head>
@@ -244,6 +291,13 @@
         <button onclick="window.location.href='/entertainment'">Entertainment</button>
     </nav>
     <main>
+
+        <div id="chatDiv" class="hidden">
+            <!-- <h2>Chat with other users!</h2>
+            <div id="chats"></div>
+            <button id="createRoomButton" onclick="createRoom()">Create a new chat!</button>
+            <input id="searchRoomInput" placeholder="Search rooms" oninput="searchRooms()"/> -->
+        </div>
         <div class="panel">
             <div>
                 <input id="searchInput" placeholder="Browse articles"/>
@@ -263,12 +317,6 @@
             </div>
         </div>
         
-        <div id="chatDiv">
-            <h2>Chat with other users!</h2>
-            <div id="chats"></div>
-            <button id="createRoomButton" onclick="createRoom()">Create a new chat!</button>
-            <input id="searchRoomInput" placeholder="Search rooms" oninput="searchRooms()"/>
-        </div>
         <div id="messages"></div>
     </main>
     </div>
@@ -379,6 +427,12 @@
                     document.getElementById('accountButton').classList.remove('hidden');
                     document.getElementById('createArticleButton').classList.remove('hidden');
                     document.getElementById('chatDiv').classList.remove('hidden');
+                    document.getElementById('chatDiv').innerHTML = `
+                        <h2>Chat with other users!</h2>
+                        <div id="chats"></div>
+                        <button id="createRoomButton" onclick="createRoom()">Create a new chat!</button>
+                        <input id="searchRoomInput" placeholder="Search rooms" oninput="searchRooms()"/>
+                    `;
                     waitForMqttConnection(data.subscribed_rooms);
                     fetchRooms();
                 }
@@ -428,7 +482,7 @@
                         articleElement.classList.add('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `
-                            <h2><a href="/article/${article.id}">${article.title}</a></h2>
+                            <h2><a style="color:black" href="/article/${article.id}">${article.title}</a></h2>
                             <p>${truncatedContent}</p>
                             <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
                             <p>Author: ${article.author}</p>
@@ -478,7 +532,7 @@
                         articleElement.classList.add('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;
                         articleElement.innerHTML = `
-                            <h2><a href="/article/${article.id}">${article.title}</a></h2>
+                            <h2><a style="color:black"  href="/article/${article.id}">${article.title}</a></h2>
                             <p>${truncatedContent}</p>
                             <p>Published on: ${new Date(article.date_created).toLocaleDateString()}</p>
                             <p>Author: ${article.author}</p>

@@ -50,24 +50,31 @@
             margin-top: 10px;
         }
         button[type="submit"] {
-            background-color: #b4ebeb; /* pudrowo niebieski */
+            background-color: #b4ebeb; 
             color: black;
         }
         button[type="submit"]:hover {
-            background-color: #add8e6; /* jaśniejszy niebieski */
+            background-color: #add8e6; 
         }
         .delete-btn {
-            background-color: #ff6b6b; /* jasny czerwony */
+            background-color: #ff6b6b; 
             color: white;
         }
         .delete-btn:hover {
-            background-color: #ff4c4c; /* ciemniejszy czerwony */
+            background-color: #ff4c4c; 
         }
         #responseMessage {
             margin-top: 15px;
             text-align: center;
             font-weight: bold;
             color: green;
+        }
+        .back-btn {
+            background-color: #d3d3d3; 
+            color: black;
+        }
+        .back-btn:hover {
+            background-color: #c0c0c0;
         }
     </style>
 </head>
@@ -94,6 +101,7 @@
             
             <button type="submit">Save Changes</button>
             <button type="button" class="delete-btn" id="deleteArticleButton">Delete Article</button>
+            <button class="back-btn" onclick="window.location.href='/'">Go back</button>
         </form>
         <div id="responseMessage"></div>
     </div>
