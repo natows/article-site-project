@@ -245,7 +245,7 @@
                 .then(data => {
                     const articlesDiv = document.getElementById('articles');
                     articlesDiv.innerHTML = '';
-                    data.sort((a, b) => new Date(b.date_created) - new Date(a.date_created)); // Sortowanie artykułów od najnowszych do najstarszych
+                    data.sort((a, b) => new Date(b.date_created) - new Date(a.date_created)); 
                     data.forEach(article => {
                         const articleElement = document.createElement('article');
                         const truncatedContent = article.content.length > 70 ? article.content.substring(0, 70) + '...' : article.content;

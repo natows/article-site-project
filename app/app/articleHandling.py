@@ -3,6 +3,8 @@ from app import app, db
 from datetime import datetime
 import paho.mqtt.publish as publish
 
+from sqlalchemy import or_
+
 
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -22,7 +24,8 @@ def search_articles():
     author = request.args.get('author', '')
     date = request.args.get('date', '')
 
-    articles_query = Article.query.filter(Article.title.contains(query))
+    
+    articles_query = Article.query.filter(or_(Article.title.contains(query), Article.content.contains(query)))
 
     if category:
         articles_query = articles_query.filter(Article.category.contains(category))
@@ -70,7 +73,10 @@ def create_article():
 @app.route('/api/articles/<category>', methods=['GET'])
 def get_articles_by_category(category):
     query = request.args.get('query', '')
-    articles = Article.query.filter(Article.category == category, Article.title.contains(query)).all()
+    articles = Article.query.filter(
+        Article.category == category,
+        or_(Article.title.contains(query), Article.content.contains(query))
+    ).all()
     results = [{'id': article.id, 'title': article.title, 'content': article.content, 'author': article.author, 'date_created': article.date_created} for article in articles]
     return jsonify(results)
 
@@ -97,7 +103,7 @@ def get_articles_by_user(username):
     results = [{'id': article.id, 'title': article.title, 'content': article.content, 'category': article.category, 'author': article.author, 'date_created': article.date_created} for article in articles]
     return jsonify(results)
 
-#zrob tu do debugu fetch autors plis
+
 
 
 @app.route('/api/articles/<int:article_id>', methods=['PUT'])

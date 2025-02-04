@@ -146,11 +146,14 @@ def update_user(user_id):
         new_status = data.get('is_admin')
 
         if new_username:
+            existing_user = User.query.filter_by(username=new_username).first()
+            if existing_user and existing_user.id != user_id:
+                return jsonify({"message": "Username already exists"}), 400
             user.username = new_username
         if new_password:
             hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
             user.password = hashed_password.decode('utf-8')
-        if new_status:
+        if new_status is not None:
             user.is_admin = new_status
 
         db.session.commit()
