@@ -1,49 +1,43 @@
-## Aplikacja webowa do dzielenia się artykułami i komunikacji w czasie rzeczywistym. Projekt demonstracyjny
+# projektProtokoly
 
-# Technologie:
-Backend
+**Aplikacja webowa do dzielenia się artykułami i komunikacji w czasie rzeczywistym.**  
+Projekt demonstracyjny prezentujący zastosowanie różnych protokołów komunikacyjnych w nowoczesnej aplikacji webowej.
 
-Flask – lekki framework w Pythonie
+---
 
-SQLAlchemy – ORM do obsługi bazy danych
+## Technologie
 
-SQLite – baza danych
+### Backend
+- **Flask** – lekki framework w Pythonie
+- **SQLAlchemy** – ORM do obsługi bazy danych
+- **SQLite** – prosta, lokalna baza danych
+- **JWT + bcrypt** – autoryzacja i bezpieczne haszowanie haseł
 
-JWT + bcrypt – bezpieczna autoryzacja i haszowanie haseł
+### Frontend
+- **HTML / CSS / JavaScript** – interfejs użytkownika, bez użycia frameworków
+- **MQTT.js** – obsługa protokołu MQTT po stronie klienta
 
-Frontend
-HTML / CSS / JS – interfejs użytkownika (czysty JS, bez frameworków)
+### Komunikacja w czasie rzeczywistym
+- **MQTT** – czat w czasie rzeczywistym (broker: HiveMQ)
+- **Flask-SocketIO** – komentarze i interakcje live
+- **SSE (Server-Sent Events)** – powiadomienia i aktualizacje subskrypcji
 
-MQTT.js – obsługa MQTT po stronie klienta
+---
 
-Komunikacja w czasie rzeczywistym
-MQTT – czat w czasie rzeczywistym (HiveMQ)
+## Zastosowane protokoły
 
-Flask-SocketIO – komentarze live
+- **HTTP** – klasyczne REST API dla operacji CRUD
+- **WebSockets** – dwukierunkowa komunikacja na żywo (np. komentarze)
+- **MQTT** – publish/subscribe (np. czat)
+- **SSE** – jednostronna komunikacja serwera z klientem (np. powiadomienia)
 
-SSE (Server-Sent Events) – powiadomienia i subskrypcje
+---
 
-Zastosowanie protokołów komunikacyjnych:
+## Główne funkcje
 
-HTTP – API do operacji CRUD
-
-WebSockets – dwukierunkowa komunikacja na żywo
-
-MQTT – czaty oparte na publish/subscribe
-
-SSE – jednostronne powiadomienia serwera
-
- 
-Główne funkcje
-
-Rejestracja, logowanie, zarządzanie kontem
-
-Tworzenie i edycja artykułów (z podziałem na kategorie)
-
-Komentarze i system lajków na żywo
-
-Czat z MQTT
-
-Subskrypcje i powiadomienia
-
-Wyszukiwanie i filtrowanie treści
+- Rejestracja, logowanie, zarządzanie kontem użytkownika  
+- Tworzenie, edycja i usuwanie artykułów z podziałem na kategorie  
+- Komentarze w czasie rzeczywistym wraz z systemem polubień  
+- Czat tematyczny oparty o MQTT  
+- Subskrypcje i system powiadomień  
+- Wyszukiwanie i filtrowanie artykułów  
