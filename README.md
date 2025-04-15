@@ -1,5 +1,5 @@
 **Aplikacja webowa do dzielenia się artykułami i komunikacji w czasie rzeczywistym.**  
-Projekt demonstracyjny prezentujący zastosowanie różnych protokołów komunikacyjnych w nowoczesnej aplikacji webowej.
+Projekt demonstracyjny zrealizowany w celach nauki backendu prezentujący zastosowanie różnych protokołów komunikacyjnych w nowoczesnej aplikacji webowej.
 
 ---
 
